@@ -1,0 +1,32 @@
+networks:
+  dockerapps-net:
+    external: true
+
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    hostname: homepage
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.25
+        ipv6_address: 2001:db8:abc2::25
+    ports:
+      - 3000:3000
+    # For Secrets
+    env_file:
+      - .env
+    environment:
+      - PUID=1000
+      - PGID=958
+      - TZ=Asia/Singapore
+      # Allow connections from LAN and Localhost
+      - HOMEPAGE_ALLOWED_HOSTS=*
+    volumes:
+      - ./config:/app/config
+      - ./config/icons:/app/public/icons
+      - /var/run/docker.sock:/var/run/docker.sock
+      # --- MOUNT DISKS ---
+      - /mnt/pool01/media:/mnt/media_disk:ro
+      - /mnt/pool01/games:/mnt/games_disk:ro
+    restart: unless-stopped

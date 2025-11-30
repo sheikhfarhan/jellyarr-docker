@@ -1,0 +1,37 @@
+# --- Secrets (Recursive) ---
+# This ignores .env files in ANY folder
+.env
+
+# --- Directories (Recursive) ---
+# These rules ignore these folder names anywhere in the project
+config/
+data/
+logs/
+log/
+cache/
+.cache/
+
+# --- Specific Pattern Directories ---
+# These catch your specific naming conventions (e.g., jellyfin-config)
+*-config/
+*-cache/
+MediaCover/
+
+# --- Large Files & Databases ---
+*.mmdb
+*.db
+*.db-wal
+*.db-shm
+
+# --- System & Misc ---
+.DS_Store
+Thumbs.db
+.Trash-1000
+/lost+found
+
+# --- Exceptions (Allow specific safe configs) ---
+!homepage/config/
+!homepage/icons/
+
+# Only ignore the real secret file
+vpn-arr-stack/gluetun/auth/config.toml

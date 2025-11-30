@@ -1,0 +1,83 @@
+# ----------------------------------------
+# Network Definition - Have already set this up beforehand
+# ----------------------------------------
+networks:
+  dockerapps-net:
+    external: true
+services:
+  ##################################################
+  # 1. JELLYFIN (Media Server)
+  ##################################################
+  jellyfin:
+    image: linuxserver/jellyfin:latest
+    container_name: jellyfin
+    hostname: jellyfin
+    group_add:
+      - "988"
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.10
+        ipv6_address: 2001:db8:abc2::10
+    ports:
+      - 8096:8096
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=Asia/Singapore
+    volumes:
+      - ./jellyfin-config:/config
+      - ./jellyfin-cache:/cache
+      - /mnt/pool01/media:/media
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    restart: unless-stopped
+
+  ##################################################
+  # 2. JELLYSEERR (Request Manager)
+  ##################################################
+  jellyseerr:
+    image: ghcr.io/fallenbagel/jellyseerr:latest
+    init: true
+    container_name: jellyseerr
+    hostname: jellyseerr
+    networks:
+      dockerapps-net: 
+        ipv4_address: 172.20.0.12
+        ipv6_address: 2001:db8:abc2::12
+    ports:
+      - 5055:5055
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ} 
+      - LOG_LEVEL=debug
+    volumes:
+      - ./jellyseerr-config:/app/config 
+    restart: unless-stopped
+    depends_on:
+      jellyfin:
+        condition: service_started
+
+  ##################################################
+  # 3. CLOUDFLARED (Cloudflare Tunnel Connector)
+  ##################################################
+  #cloudflared:
+  #  image: cloudflare/cloudflared:latest
+  #  container_name: cloudflared
+  #  networks:
+  #    - dockerapps-net
+  #  command: tunnel --no-autoupdate run
+  #  environment:
+  #    - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+  #  #  - TUNNEL_ORIGIN_CERT=/etc/cloudflared/certs/origin_cert.pem
+  #  #volumes:
+  #  #  - ./cloudflared/certs:/etc/cloudflared/certs
+  #  # no need the above since we are using http port 8096 vs the https port
+  #  # The connection from Cloudflared -> Jellyfin is HTTP,
+  #  # which is secure inside the isolated Docker network.
+  #  restart: unless-stopped
+  #  depends_on:    
+  #    jellyfin:
+  #      condition: service_started
+  #    jellyseerr:
+  #      condition: service_started

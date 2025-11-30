@@ -1,0 +1,8 @@
+[[roles]]
+name = "homepage"
+auth = "apikey"
+apikey = "generate_your_own_key"
+routes = [
+    "GET /v1/publicip/ip", 
+    "GET /v1/openvpn/portforwarded"
+]

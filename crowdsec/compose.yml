@@ -1,0 +1,26 @@
+networks:
+  dockerapps-net:
+    external: true
+
+services:
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    container_name: crowdsec
+    hostname: crowdsec
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.24
+        ipv6_address: 2001:db8:abc2::24
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - COLLECTIONS=crowdsecurity/caddy crowdsecurity/http-cve crowdsecurity/whitelist-good-actors crowdsecurity/linux
+    volumes:
+      - ./config:/etc/crowdsec:rw
+      - ./acquis.yaml:/etc/crowdsec/acquis.yaml:ro
+      - /mnt/pool01/dockerapps/caddy/logs:/var/log/caddy:ro
+      # --- (Bind Mount) ---
+      # We map the database to a local folder so rclone can back it up
+      - ./data:/var/lib/crowdsec/data/
+    restart: unless-stopped

@@ -1,0 +1,36 @@
+networks:
+  dockerapps-net:
+    external: true
+
+services:
+  caddy:
+    build: . # Tells Compose to build the Dockerfile in this folder
+    image: caddy-cloudflare-plugin
+    container_name: caddy
+    hostname: caddy
+    networks:
+      dockerapps-net:
+        # Caddy's internal static IP
+        ipv4_address: 172.20.0.23
+        ipv6_address: 2001:db8:abc2::23
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - CROWDSEC_API_KEY=${CROWDSEC_API_KEY}
+      - ROOT_DOMAIN=${ROOT_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile # Caddy's config file
+      - ./data:/data                      # For certs & persistent data
+      - ./config:/config                  # For Caddy's internal config
+      - ./logs:/var/log/caddy
+      - ./GeoLite2-Country.mmdb:/etc/caddy/GeoLite2-Country.mmdb:ro
+    # IGNORE UPDATES: This is a local custom-built image.
+    # WUD cannot check it on Docker Hub (prevents 401 errors).
+    labels:
+      - "wud.watch=false"
+    restart: unless-stopped

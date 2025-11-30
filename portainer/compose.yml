@@ -1,0 +1,28 @@
+# ----------------------------------------
+# Network Definition - Have already set this up beforehand
+# ----------------------------------------
+networks:
+  dockerapps-net:
+    external: true
+
+services:
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    networks: # <-- ASSIGN to the network
+      dockerapps-net:
+        ipv4_address: 172.20.0.17
+        ipv6_address: 2001:db8:abc2::17
+    ports:
+      - 9443:9443
+    environment:
+      - PUID=${PUID} 
+      - PGID=${PGID} 
+      - TZ=${TZ}     
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/data
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+
+

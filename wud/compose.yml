@@ -1,0 +1,33 @@
+networks:
+  dockerapps-net:
+    external: true
+services:
+  ##################################################
+  # WUD (The Update Notifier)
+  ##################################################
+  wud:
+    image: getwud/wud:latest
+    container_name: wud
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.27
+        ipv6_address: 2001:db8:abc2::27
+    # Port 3000 was taken by homepage
+    ports:
+      - 3001:3000
+    volumes:
+      # Mount the Docker socket (read-only)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount its own config data
+      - ./data:/data
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - WUD_LOG_LEVEL=info
+      # This reads the cycle time (e.g., 86400) from .env file
+      - WUD_POLL_CYCLE=${WUD_POLL_CYCLE}
+      # --- Trigger ---
+      - WUD_TRIGGER_GOTIFY_LOCAL_URL=http://gotify:80
+      - WUD_TRIGGER_GOTIFY_LOCAL_TOKEN=${GOTIFY_TOKEN}
+    restart: unless-stopped

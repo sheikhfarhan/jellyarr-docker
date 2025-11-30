@@ -1,0 +1,36 @@
+# --- Cache & Metadata (The "Big Stuff") ---
+jellyfin/jellyfin-cache/**
+jellyfin/jellyfin-config/.cache/**
+jellyfin/jellyfin-config/cache/**
+jellyfin/jellyseerr-config/cache/**
+jellyfin/jellyfin-config/data/metadata/**
+vpn-arr-stack/bazarr/config/cache/**
+vpn-arr-stack/prowlarr/config/cache/**
+vpn-arr-stack/prowlarr/config/Definitions/**
+
+# --- Media Covers (Images you don't need to backup) ---
+vpn-arr-stack/radarr/config/MediaCover/**
+vpn-arr-stack/sonarr/config/MediaCover/**
+
+# --- Specific Large/Useless Files ---
+**/mesa_cache.db
+
+# --- Logs (The "Noisy Stuff") ---
+# This wildcard catches log folders in any subdirectory
+**/logs/**
+**/log/**
+# Specific log files not in folders
+**/*.log
+
+# --- Temporary & System Files ---
+# Database locks and temp files
+**.db-wal
+**.db-shm
+**/ipc-socket
+**/*.tmp
+**/*.pid
+
+# System Trash & OS Metadata
+.Trash-1000/**
+**/.DS_Store
+**/Thumbs.db

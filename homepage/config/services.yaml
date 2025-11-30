@@ -1,0 +1,156 @@
+- Media:
+    - Jellyfin:
+        icon: jellyfin.png
+        href: http://172.20.0.10:8096
+        description: Media Server
+        container: jellyfin
+        widget:
+          type: jellyfin
+          url: http://172.20.0.10:8096
+          key: {{HOMEPAGE_VAR_JELLYFIN_KEY}}
+          enableBlocks: true
+
+    - Jellyseerr:
+        icon: jellyseerr.png
+        href: http://172.20.0.12:5055
+        description: Request Manager
+        container: jellyseerr
+        widget:
+          type: jellyseerr
+          url: http://172.20.0.12:5055
+          key: {{HOMEPAGE_VAR_JELLYSEERR_KEY}}
+
+- Automation:
+    - Radarr:
+        icon: radarr.png
+        href: http://172.20.0.13:7878
+        description: Movie Manager
+        container: radarr
+        widget:
+          type: radarr
+          url: http://172.20.0.13:7878
+          key: {{HOMEPAGE_VAR_RADARR_KEY}}
+
+    - Sonarr:
+        icon: sonarr.png
+        href: http://172.20.0.14:8989
+        description: TV Manager
+        container: sonarr
+        widget:
+          type: sonarr
+          url: http://172.20.0.14:8989
+          key: {{HOMEPAGE_VAR_SONARR_KEY}}
+
+    - Bazarr:
+        icon: bazarr.png
+        href: http://172.20.0.15:6767
+        description: Subtitles
+        container: bazarr
+        widget:
+          type: bazarr
+          url: http://172.20.0.15:6767
+          key: {{HOMEPAGE_VAR_BAZARR_KEY}}
+
+    - Prowlarr:
+        icon: prowlarr.png
+        href: http://172.20.0.20:9696
+        description: Indexer Manager
+        container: prowlarr
+        widget:
+          type: prowlarr
+          url: http://172.20.0.20:9696
+          key: {{HOMEPAGE_VAR_PROWLARR_KEY}}
+
+    - Profilarr:
+        icon: profilarr.png
+        href: http://172.20.0.19:7777
+        description: Quality & Custom Format Sync
+        container: profilarr
+        #widget:
+        #  type: profilarr
+        #  url: http://172.20.0.19:7777
+
+    - Gluetun:
+        icon: gluetun.png
+        href: "#"
+        description: VPN Gateway
+        container: gluetun
+        widget:
+          type: gluetun
+          url: http://172.20.0.11:8000
+          key: {{HOMEPAGE_VAR_GLUETUN_KEY}}
+
+    - Transmission:
+        icon: transmission.png
+        href: http://172.20.0.11:9091
+        description: VPN Torrent Client
+        container: transmission
+        widget:
+          type: transmission
+          url: http://172.20.0.11:9091
+          username: {{HOMEPAGE_VAR_TRANS_USER}}
+          password: {{HOMEPAGE_VAR_TRANS_PASS}}
+
+    - QBittorrent:
+        icon: qbittorrent.png
+        href: http://172.20.0.11:8080
+        description: VPN Torrent Client
+        container: qbittorrent
+        widget:
+          type: qbittorrent
+          url: http://172.20.0.11:8080
+          username: {{HOMEPAGE_VAR_QBIT_USER}}
+          password: {{HOMEPAGE_VAR_QBIT_PASS}}
+
+- Management:
+    - Portainer:
+        icon: portainer.png
+        href: https://172.20.0.17:9443
+        description: Docker UI
+        container: portainer
+
+    - Gotify:
+        icon: gotify.png
+        href: http://172.20.0.16:80
+        description: Notifications
+        container: gotify
+        widget:
+          type: gotify
+          url: http://172.20.0.16:80
+          key: {{HOMEPAGE_VAR_GOTIFY_KEY}}
+
+    - Caddy:
+        icon: caddy.png
+        href: http://172.20.0.23
+        description: Reverse Proxy
+        container: caddy
+        
+    - CrowdSec:
+        icon: crowdsec.png
+        href: http://172.20.0.24:8080
+        description: Security Brain
+        container: crowdsec
+        widget:
+          type: crowdsec
+          url: http://172.20.0.24:8080
+          username: {{HOMEPAGE_VAR_CROWDSEC_USER}}
+          password: {{HOMEPAGE_VAR_CROWDSEC_PASS}}
+          fields: ["alerts", "bans"]
+        
+    - Dozzle:
+        icon: dozzle.png
+        href: http://172.20.0.26:8080
+        description: Log Viewer
+        container: dozzle
+        #widget:
+        #  type: dozzle
+        #  url: http://172.20.0.26:8080
+
+    - WUD:
+        icon: /icons/wud.png
+        href: http://172.20.0.27:3000
+        description: Update Notifier
+        container: wud
+        widget:
+          type: whatsupdocker
+          url: http://172.20.0.27:3000
