@@ -36,7 +36,7 @@ services:
   # 2. JELLYSEERR (Request Manager)
   ##################################################
   jellyseerr:
-    image: ghcr.io/fallenbagel/jellyseerr:latest
+    image: fallenbagel/jellyseerr:latest
     init: true
     container_name: jellyseerr
     hostname: jellyseerr
@@ -50,7 +50,6 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ} 
-      - LOG_LEVEL=debug
     volumes:
       - ./jellyseerr-config:/app/config 
     restart: unless-stopped

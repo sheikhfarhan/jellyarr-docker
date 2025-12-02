@@ -39,7 +39,11 @@ jellyfin.{env.ROOT_DOMAIN} {
     # Define Internal IPs (Docker Network + LAN)
     @internal {
         remote_ip 172.20.0.0/24 192.168.0.0/16 127.0.0.1
+        #IPv6 Ranges (Docker IPv6 + Localhost IPv6)
+        remote_ip 2001:db8:abc2::/64 ::1
     }
+
+
 
     # Skip logging for internal IPs
     log_skip @internal
@@ -93,6 +97,8 @@ requests.{env.ROOT_DOMAIN} {
     # Define Internal IPs (Docker Network + LAN)
     @internal {
         remote_ip 172.20.0.0/24 192.168.0.0/16 127.0.0.1
+        #IPv6 Ranges (Docker IPv6 + Localhost IPv6)
+        remote_ip 2001:db8:abc2::/64 ::1
     }
 
     # Skip logging for internal IPs
@@ -142,6 +148,8 @@ gotify.{env.ROOT_DOMAIN} {
     # Define Internal IPs (Docker Network + LAN)
     @internal {
         remote_ip 172.20.0.0/24 192.168.0.0/16 127.0.0.1
+        #IPv6 Ranges (Docker IPv6 + Localhost IPv6)
+        remote_ip 2001:db8:abc2::/64 ::1
     }
 
     # Skip logging for internal IPs

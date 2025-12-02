@@ -6,41 +6,56 @@ This hierarchy reflects the live server state. It respects the "Two-Zone" networ
 
 ```text
 /mnt/pool01/
-├── dockerapps/                      # (LV: lv_dockerapps)
+├── dockerapps/                      # (LV: lv_dockerapps - 60GB)
 │   ├── scripts/                     # Automation scripts
 │   ├── docs/                        # This documentation
+│   ├── .env                         # Global secrets
+│   │
+│   ├── utilities/                   # Unified Management Stack
+│   │   ├── compose.yml              # Controls Homepage, Portainer, WUD, Proxy
+│   │   ├── .env                     # Secrets for management tools
+│   │   ├── homepage/
+│   │   │   └── config/              # YAML configs (services, widgets, settings)
+│   │   ├── portainer/
+│   │   │   └── data/                # Portainer database
+│   │   └── wud/
+│   │       └── store/               # WUD state & history
+│   │
 │   ├── caddy/                       # Security Ingress
-│   │   ├── config/                  # Caddy internal config
-│   │   ├── data/                    # SSL Certs
-│   │   └── logs/                    # Access logs for CrowdSec
+│   │   ├── compose.yml
+│   │   ├── .env   
+│   │   ├── Caddyfile
+│   │   ├── data/
+│   │   └── logs/
+│   │
 │   ├── crowdsec/                    # Security Brain
+│   │   ├── compose.yml
+│   │   ├── .env   
 │   │   ├── config/
-│   │   └── data/                    # Persistent database
+│   │   └── data/
+│   │
 │   ├── gotify/                      # Notifications
-│   │   └── data/                    # Database & Images
-│   ├── homepage/                    # Dashboard
-│   │   └── config/                  # YAML configs
+│   │   ├── compose.yml
+│   │   ├── .env   
+│   │   └── data/
+│   │
 │   ├── jellyfin/                    # Media Core
+│   │   ├── compose.yml
+│   │   ├── .env   
 │   │   ├── jellyfin-config/
 │   │   ├── jellyfin-cache/
 │   │   └── jellyseerr-config/
-│   ├── vpn-arr-stack/               # Automation Engine
-│   │   ├── gluetun/
-│   │   │   ├── config/              # Disposable data (servers.json)
-│   │   │   └── auth/                # Security config
-│   │   │       ├── config.toml      # Secret (Ignored)
-│   │   │       └── config.toml.example
-│   │   ├── radarr/
-│   │   ├── sonarr/
-│   │   ├── prowlarr/
-│   │   ├── bazarr/
-│   │   ├── qbittorrent/
-│   │   ├── transmission/
-│   │   ├── jackett/
-│   │   ├── flaresolverr/
-│   │   └── profilarr/
-│   ├── portainer/
-│   └── wud/
+│   │
+│   └── vpn-arr-stack/               # Automation Engine
+│       ├── compose.yml
+│       ├── .env   
+│       ├── gluetun/
+│       │   ├── config/              # Disposable (servers.json)
+│       │   └── auth/                # Secrets (config.toml)
+│       ├── radarr/
+│       ├── sonarr/
+│       ├── ... (other arr apps)
+│       └── profilarr/
 │
 ├── media/                           # (LV: lv_media)
 │   ├── downloads/                   # Ingest Zone
@@ -78,40 +93,36 @@ sudo chmod -R 775 /mnt/pool01/media
 ### **B. Create the `dockerapps` Structure**
 
 ```bash
-# 1. Create the base directory
+# Create Base
 sudo mkdir -p /mnt/pool01/dockerapps
 
-# 2. Create Service Folders
+# Create Service Folders
 cd /mnt/pool01/dockerapps
 mkdir -p scripts docs
 
-# Security & Core (Detailed structures)
-mkdir -p caddy/{config,data,logs}
+# Utilities Stack
+# Create specific subfolders for the services that need persistence
+mkdir -p utilities/homepage/config
+mkdir -p utilities/portainer/data
+mkdir -p utilities/wud/store
+# (Note: Dozzle and Socket-Proxy are stateless, so they don't need folders)
+
+# Security & Core
+mkdir -p caddy/{config,data,logs} #we want the logs folder to be user-owned
 mkdir -p crowdsec/{config,data}
 mkdir -p gotify/data
-mkdir -p homepage/config
-mkdir -p homepage/config/icons
 
-# Media Core (Specific naming convention)
+# Media Core
 mkdir -p jellyfin/{jellyfin-config,jellyfin-cache,jellyseerr-config}
 
 # Automation Engine (VPN & Arrs)
-# CRITICAL: We create a 'config' subfolder for EACH service.
-# This ensures the mount point exists with User 1000 permissions *before* Docker starts.
-# Create separate folders for Gluetun
+# Create separate Auth folder for Gluetun
 mkdir -p vpn-arr-stack/gluetun/{config,auth}
-
-# Create 'config' for the rest of the Arr stack
+# Create config folders for all *Arr apps
 mkdir -p vpn-arr-stack/{radarr,sonarr,prowlarr,bazarr,qbittorrent,transmission,jackett,flaresolverr,profilarr}/config
 
-# Management & Utilities
-# We pre-create the data folders to prevent root-ownership issues here too.
-mkdir -p portainer/data
-mkdir -p wud/data
-mkdir -p dozzle
-
 # 3. Set Permissions (The "Golden Command")
-# This ensures your user (1000) owns every single folder we just created.
+# Ensure our user (1000) owns everything so containers don't crash
 sudo chown -R 1000:1000 /mnt/pool01/dockerapps
 ```
 

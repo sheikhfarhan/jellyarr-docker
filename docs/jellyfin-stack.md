@@ -66,7 +66,6 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ} 
-      - LOG_LEVEL=debug
     volumes:
       - ./jellyseerr-config:/app/config
     restart: unless-stopped
@@ -146,7 +145,7 @@ Jellyfin "sees" the media files at `/media`.
       * **Static IP:** `172.20.0.12`
       * **Port:** `5055`
   * **Environment:**
-      * `LOG_LEVEL=debug` (Helpful for troubleshooting connection issues).
+      * `LOG_LEVEL=debug` (Add this if needed for troubleshooting connection issues).
   * **Volumes:**
       * `./jellyseerr-config:/app/config` (Stores user database and request history).
 

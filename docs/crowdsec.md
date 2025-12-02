@@ -65,7 +65,7 @@ CrowdSec requires a "Bouncer" API key to allow Caddy to check IP reputations.
 
 If we rebuild the server, the old API key in Caddy's `.env` will be invalid. We must generate a new one:
 
-1.  **Start CrowdSec:** `docker compose up -d`
+1.  **Start CrowdSec:**
 2.  **Run the Registration Command:**
     ```bash
     docker exec crowdsec cscli bouncers add caddy-bouncer

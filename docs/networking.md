@@ -93,27 +93,6 @@ Every service is assigned a permanent IP address to prevent DNS resolution delay
 
 **Subnet:** `172.20.0.x`
 
-| IP Address | Service | Stack | Internal Port | Notes |
-| :--- | :--- | :--- | :--- | :--- |
-| `172.20.0.1` | **Gateway** | *Host* | - | The host machine itself (Router for containers) |
-| `172.20.0.10` | **Jellyfin** | `jellyfin` | 8096 | Media Server (Proxied by Caddy) |
-| `172.20.0.11` | **Gluetun** | `vpn-arr` | - | **VPN Gateway** (AirVPN) |
-| `172.20.0.12` | **Jellyseerr** | `jellyfin` | 5055 | Request Manager |
-| `172.20.0.13` | **Radarr** | `vpn-arr` | 7878 | Movie Management |
-| `172.20.0.14` | **Sonarr** | `vpn-arr` | 8989 | TV Management |
-| `172.20.0.15` | **Bazarr** | `vpn-arr` | 6767 | Subtitles |
-| `172.20.0.16` | **Gotify** | `gotify` | 80 | Notification Server |
-| `172.20.0.17` | **Portainer** | `portainer` | 9443 | Docker UI |
-| `172.20.0.19` | **Profilarr** | `vpn-arr` | 5000 | Quality & Formats Sync |
-| `172.20.0.20` | **Prowlarr** | `vpn-arr` | 9696 | Indexer Manager (Uses `dns: 1.1.1.1` override) |
-| `172.20.0.21` | **FlareSolverr** | `vpn-arr` | 8191 | CAPTCHA Solver |
-| `172.20.0.22` | **Jackett** | `vpn-arr` | 9117 | Secondary Indexer Proxy |
-| `172.20.0.23` | **Caddy** | `caddy` | 80/443 | **Ingress & Security** |
-| `172.20.0.24` | **CrowdSec** | `crowdsec` | 8080 | Intrusion Detection System (IDS) |
-| `172.20.0.25` | **Homepage** | `homepage` | 3000 | Dashboard |
-| `172.20.0.26` | **Dozzle** | `dozzle` | 8080 | Log Viewer |
-| `172.20.0.27` | **WUD** | `wud` | 3001 | Container Updater with Webhooks to Gotify |
-
 -----
 
 ## 4\. Special Networking Logic
@@ -131,7 +110,7 @@ Every service is assigned a permanent IP address to prevent DNS resolution delay
 
   * **General Containers:** Use the host's Docker resolver (forwarding to `1.1.1.1` via `daemon.json`).
   * **VPN Containers:** Use AirVPN's internal DNS (pushed via WireGuard).
-  * **Prowlarr:** Explicitly configured with `dns: [1.1.1.1, 8.8.8.8]` in `compose.yml` to ensure it can resolve indexer domains reliably without using the VPN tunnel (avoiding "Bad Neighbor" blocks).
+  * **Prowlarr:** Explicitly configured with `dns: [1.1.1.1, 8.8.8.8]` in `compose` to ensure it can resolve indexer domains reliably without using the VPN tunnel (avoiding "Bad Neighbor" blocks).
 
 ### **C. Caddy Ingress (Reverse Proxy)**
 

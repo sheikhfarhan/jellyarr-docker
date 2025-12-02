@@ -1,0 +1,145 @@
+networks:
+  dockerapps-net:
+    external: true
+
+services:
+  ##################################################
+  # 1. DOCKER SOCKET PROXY (The Gatekeeper)
+  ##################################################
+  # This container is the ONLY one that touches the real socket.
+  # All other apps talk to this proxy via TCP.
+  socket-proxy:
+    image: linuxserver/socket-proxy:latest
+    container_name: socket-proxy
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.28
+        ipv6_address: 2001:db8:abc2::28
+    environment:
+      # READ ACCESS (Allowed)
+      - CONTAINERS=1
+      - IMAGES=1
+      - INFO=1
+      - NETWORKS=1
+      - VOLUMES=1
+      - SERVICES=1    # (Optional, good for stack viewing)
+      - TASKS=1       # (Optional)
+      - EVENTS=1      # Critical for real-time updates
+      
+      # WRITE ACCESS (Blocked by Default - "Read Only" Mode)
+      # This prevents Homepage/Portainer from creating/deleting containers.
+      # If we need to manage containers via Portainer, change POST to 1.
+      - POST=0
+      - AUTH=0
+      - SECRETS=0
+      - LOG_LEVEL=warning
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+
+  ##################################################
+  # 2. HOMEPAGE (Dashboard)
+  ##################################################
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    hostname: homepage
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.25
+        ipv6_address: 2001:db8:abc2::25
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    environment:
+      - PUID=1000
+      - PGID=958
+      - TZ=${TZ}
+      - HOMEPAGE_ALLOWED_HOSTS=*
+      # Use the Proxy instead of the Socket
+      - DOCKER_HOST=tcp://172.20.0.28:2375
+    volumes:
+      - ./homepage/config:/app/config
+      - ./homepage/config/icons:/app/public/icons
+      # Host Disk Mounts (Unchanged)
+      - /mnt/pool01/media:/mnt/media_disk:ro
+      - /mnt/pool01/games:/mnt/games_disk:ro
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy
+
+  ##################################################
+  # 3. DOZZLE (Log Viewer)
+  ##################################################
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    hostname: dozzle
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.26
+        ipv6_address: 2001:db8:abc2::26
+    ports:
+      - 9090:8080
+    environment:
+      # Use the Proxy
+      - DOCKER_HOST=tcp://socket-proxy:2375
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy
+
+  ##################################################
+  # 4. WUD (Update Notifier)
+  ##################################################
+  wud:
+    image: getwud/wud:latest
+    container_name: wud
+    hostname: wud
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.27
+        ipv6_address: 2001:db8:abc2::27
+    ports:
+      - 3001:3000
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - WUD_LOG_LEVEL=info
+      - WUD_WATCHER_PROXY_HOST=172.20.0.28
+      - WUD_WATCHER_PROXY_PORT=2375
+      # --- REGISTRIES ---
+      - WUD_REGISTRY_LSCR_LSCR_USERNAME=${GITHUB_USER}
+      - WUD_REGISTRY_LSCR_LSCR_TOKEN=${GITHUB_TOKEN}
+      - WUD_REGISTRY_GHCR_GHCR_USERNAME=${GITHUB_USER}
+      - WUD_REGISTRY_GHCR_GHCR_TOKEN=${GITHUB_TOKEN}
+    volumes:
+      - ./wud/store:/store
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy
+
+  ##################################################
+  # 5. PORTAINER (Management UI)
+  ##################################################
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    hostname: portainer
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.17
+        ipv6_address: 2001:db8:abc2::17
+    ports:
+      - 9443:9443
+    environment:
+      - PUID=${PUID} 
+      - PGID=${PGID} 
+      - TZ=${TZ}   
+    volumes:
+      - ./portainer/data:/data
+      # NO SOCKET MOUNT HERE!
+      # We will configure it to use the proxy via the UI.
+    restart: unless-stopped

@@ -264,7 +264,7 @@ services:
   # 8. FLARESOLVERR (Challenge Solver)
   ##################################################
   flaresolverr:
-    image: ghcr.io/flaresolverr/flaresolverr:latest
+    image: flaresolverr/flaresolverr:latest
     container_name: flaresolverr
     hostname: flaresolverr
     networks:
@@ -290,7 +290,7 @@ services:
     restart: unless-stopped
         
   ##################################################
-  # 9. PROFILARR (Trash Guide Syncer) - NEW SERVICE
+  # 9. PROFILARR (Quality Settings & Custom Format Syncs)
   ##################################################
   profilarr:
     image: santiagosayshey/profilarr:latest
