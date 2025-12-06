@@ -301,5 +301,5 @@ This project is documented in modular "Deep Dives". Click the links below for de
 * **[CrowdSec IDS](docs/crowdsec.md):** The "Brain." Reads logs and bans malicious IPs before they touch the application.
 * **[Cloudflare Configuration](docs/cloudflare-setup.md):** Setup for API Tokens, DNS Records, and Permissions.
 * **[Firewalld](docs/security-firewall.md):** Firewalld "Software VLAN"
-* **[Utilities](docs/utilities.md):** Management stack & Socket Proxy.
+* **[Utilities](docs/utilities.md):** Management stack & Socket Proxy
 
