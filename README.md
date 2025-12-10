@@ -123,7 +123,9 @@ This project is documented in modular "Deep Dives". Click the links below for de
 ## Scripts
 
 * [Update all containers/services](scripts/pull-all.sh)
+  
   ![pull-all example](/assets/pull-all.png)
 
 * [Compose up (with --force-recreate) all containers/services](scripts/start-stacks.sh)
+  
   ![start-stacks example](/assets/start-stacks.png)
