@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e # Exit immediately if any command fails
 
-echo "--- Forcibly Re-creating All Docker Stacks ---"
+echo "--- 🐳 Forcibly Re-creating All Docker Stacks ---"
 echo "This will take a few minutes as all containers are rebuilt..."
 echo ""
 
@@ -35,8 +35,6 @@ cd $BASE_DIR/vpn-arr-stack && docker compose up -d --force-recreate
 
 echo "[6/6] Re-creating Management Stack (Utilities)..."
 cd $BASE_DIR/utilities && docker compose up -d --force-recreate
-
-
 
 echo ""
 echo "--- All stacks re-created successfully! ---"
