@@ -17,7 +17,7 @@ cd $BASE_DIR/gotify && docker compose up -d --force-recreate
 echo "[2/6] Re-creating CrowdSec (Security Brain)..."
 cd $BASE_DIR/crowdsec && docker compose up -d --force-recreate
 
-echo "[3/6] Re-creating Caddy (Reverse Proxy & Security)..."
+echo "[3/6] Re-creating Caddy (Reverse Proxy & Logs)..."
 cd $BASE_DIR/caddy && docker compose up -d --force-recreate
 
 # --- Step 2: Media Core ---
@@ -33,7 +33,7 @@ cd $BASE_DIR/vpn-arr-stack && docker compose up -d --force-recreate
 
 # --- Step 4: Utilities ---
 
-echo "[6/6] Re-creating Management Stack (Utilities)..."
+echo "[6/6] Re-creating Management & Loggings Stack (Utilities)..."
 cd $BASE_DIR/utilities && docker compose up -d --force-recreate
 
 echo ""

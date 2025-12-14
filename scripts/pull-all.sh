@@ -3,12 +3,12 @@ echo "--- 🐳 Pulling Updates for All Stacks ---"
 
 # Define your stacks
 STACKS=(
-  "utilities"
   "caddy"
-  "jellyfin"
-  "vpn-arr-stack"
   "crowdsec"
   "gotify"
+  "jellyfin"
+  "utilities"
+  "vpn-arr-stack"
 )
 
 BASE_DIR="/mnt/pool01/dockerapps"
@@ -19,15 +19,19 @@ for stack in "${STACKS[@]}"; do
     cd "$BASE_DIR/$stack" || continue
 
     # --- SPECIAL HANDLING FOR CADDY ---
-    # Caddy is a custom build (for Cloudflare plugin), so we cannot 'pull' it.
-    # We must 'build --pull' to fetch the latest base image and re-compile.
+    # Caddy is a custom build so we cannot 'pull' it.
     if [ "$stack" == "caddy" ]; then
-        docker compose build --pull
+        echo "Caddy Stack: Updating sidecars only..."
+        
+        # Note: Using SERVICE names from our compose file
+        docker compose pull goaccess maxmind
+        
+        echo "⚠️  Skipping Caddy core (xcaddy custom build). Run 'rebuild-caddy.sh' to update modules/plugins."
     else
+        # Standard behavior for all other stacks
         docker compose pull
     fi
-    # ----------------------------------
-
+    
     echo "✅  $stack updated."
     echo "-----------------------------------"
   else

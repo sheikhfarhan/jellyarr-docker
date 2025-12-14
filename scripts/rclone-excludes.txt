@@ -8,17 +8,19 @@ vpn-arr-stack/bazarr/config/cache/**
 vpn-arr-stack/prowlarr/config/cache/**
 vpn-arr-stack/prowlarr/config/Definitions/**
 
-# --- Media Covers (Images you don't need to backup) ---
+# --- Media Covers (Images we don't need to backup) ---
 vpn-arr-stack/radarr/config/MediaCover/**
 vpn-arr-stack/sonarr/config/MediaCover/**
 
 # --- Specific Large/Useless Files ---
 **/mesa_cache.db
+**/*.mmdb
 
 # --- Logs (The "Noisy Stuff") ---
 # This wildcard catches log folders in any subdirectory
 **/logs/**
 **/log/**
+
 # Specific log files not in folders
 **/*.log
 
