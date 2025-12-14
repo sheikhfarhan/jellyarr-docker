@@ -4,9 +4,9 @@
 
 Deploy a lightweight, low-overhead monitoring solution (**Beszel**) that can:
 
-1.  Reside strictly within the `dockerapps-net` internal network (no exposed host ports).
-2.  Route Docker socket traffic securely via a **Socket Proxy**.
-3.  Accurately monitor my **LVM Logical Volumes** (Disk I/O and Usage) from within a container.
+1.  Reside within the `dockerapps-net` internal network.
+2.  Route Docker socket traffic via a **Socket Proxy**.
+3.  Accurately monitor my **LVM Logical Volumes** (Disk I/O and Usage).
 
 ## 2\. Architecture
 
@@ -131,7 +131,7 @@ services:
 
       # 4. Games Folder (Optional)
       # If I want to monitor this, create the .beszel folder first:
-      # sudo mkdir -p /mnt/pool01/games/.beszel
+      # mkdir -p /mnt/pool01/games/.beszel
       # Then uncomment the line below
       # - /mnt/pool01/games/.beszel:/extra-filesystems/dm-1__Games:ro
 
@@ -149,7 +149,7 @@ Beszel uses the **Shoutrrr** notification library. This means we do not configur
 
 ### A. Get the Token
 
-1.  Open your Gotify Web UI (`http://172.20.0.16` or your domain).
+1.  Open Gotify Web UI.
 2.  Click **Apps** $\rightarrow$ **Create Application**.
 3.  Name it `Beszel` and copy the **Token** (e.g., `A-k9L2...`).
 
@@ -165,11 +165,11 @@ Beszel uses the **Shoutrrr** notification library. This means we do not configur
       * `gotify://` tells Beszel to use the Gotify protocol.
       * `gotify:80` targets the container hostname inside the `dockerapps-net` network.
       * Since we are sending to our locally hosted gotify, have to add the /?DisplayTLS=yes at the end. If we are sending to our https:gotify.domain.xyz instead then the input should be `gotify://gotify.domain.xyz/<PASTE-YOUR-TOKEN-HERE>`
-5.  **Test:** You should receive a notification immediately.
+5.  **Test:** Should receive a notification immediately.
 
 ### C. Recommended Thresholds
 
-Set these inside the specific "System" view (Bell icon).
+Set specific "System" view (Bell icon).
 
 | Resource | Condition | Duration | Reason |
 | :--- | :--- | :--- | :--- |
