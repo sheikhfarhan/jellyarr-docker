@@ -25,8 +25,7 @@ services:
       - SERVICES=1    # (Optional, good for stack viewing)
       - TASKS=1       # (Optional)
       - EVENTS=1      # Critical for real-time updates
-      
-      # WRITE ACCESS (Blocked by Default - "Read Only" Mode)
+       # WRITE ACCESS (Blocked by Default - "Read Only" Mode)
       # This prevents Homepage/Portainer from creating/deleting containers.
       # If we need to manage containers via Portainer, change POST to 1.
       - POST=0
@@ -146,3 +145,59 @@ services:
       # NO SOCKET MOUNT HERE!
       # We will configure it to use the proxy via the UI.
     restart: unless-stopped
+
+  ##################################################
+  # 6. BESZEL HUB (Monitoring Server)
+  ##################################################
+  beszel-hub:
+    image: henrygd/beszel:latest
+    container_name: beszel-hub
+    hostname: beszel-hub
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.31
+        ipv6_address: 2001:db8:abc2::31
+    ports:
+      - 8090:8090
+    environment:
+      - TZ=${TZ}   
+    volumes:
+      - ./beszel/data:/beszel_data
+    restart: unless-stopped
+
+##################################################
+  # 7. BESZEL AGENT (Metrics Collector)
+  ##################################################
+  beszel-agent:
+    image: henrygd/beszel-agent:latest
+    container_name: beszel-agent
+    hostname: beszel-agent
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.32
+        ipv6_address: 2001:db8:abc2::32
+    environment:
+      - TZ=${TZ}   
+      - LISTEN=45876
+      - KEY=${MEDIASVR_PUBLIC_KEY}
+      - TOKEN=${MEDIASVR_TOKEN}
+      - HUB_URL=http://172.20.0.31:8090
+      # Use socket-proxy
+      - DOCKER_HOST=tcp://socket-proxy:2375
+      # Force the Main Chart to look at my actual CachyOS Root - to change accordingly for new system
+      # (This prevents it from accidentally monitoring the container overlay)
+      - FILESYSTEM=/dev/nvme0n1p2
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      # CachyOS Root directory - to change accordingly for new system
+      - /:/extra-filesystems/nvme0n1p2__CachyOS:ro
+      # DOCKER APPS (LVM: dm-0) - - to change accordingly for new system
+      - /mnt/pool01/dockerapps/.beszel:/extra-filesystems/dm-0__DockerApps:ro
+      # MEDIA (LVM: dm-2) - - to change accordingly for new system
+      - /mnt/pool01/media/.beszel:/extra-filesystems/dm-2__Media:ro
+      # Optional - listing systemd services
+      - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy
+      - beszel-hub
