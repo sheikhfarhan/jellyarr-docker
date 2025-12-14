@@ -46,7 +46,13 @@ This stack consolidates all management tools behind a **Socket Proxy**, ensuring
   * **Port:** `9090` (Mapped to host 8080)
   * **Connection:** `DOCKER_HOST=tcp://172.20.0.28:2375`
 
-**File:** [`compose`](/utilities/compose.yml)
+  ### **F. Beszel Hub + Agent (Monitoring Hub)**
+
+  * **IP:** For Hub: `172.20.0.31`
+  * **Port:** For Hub: `8090` (Mapped to host 8090)
+  * **Connection:** For Agent: `DOCKER_HOST=tcp://socket-proxy:2375`
+
+**File:** [`compose.yml`](/utilities/compose.yml)
 
 -----
 

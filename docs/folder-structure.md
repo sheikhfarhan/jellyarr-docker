@@ -25,8 +25,18 @@ This hierarchy reflects the live server state. It respects the "Two-Zone" networ
 │   │   ├── compose.yml
 │   │   ├── .env   
 │   │   ├── Caddyfile
+│   │   ├── Dockerfile
 │   │   ├── data/
+│   │   ├── config/
 │   │   └── logs/
+│   │   │   └── access.log
+│   │   │   └── caddy.log
+│   │   └── goaccess/
+│   │   │   └── data/
+│   │   │   └── html/
+│   │   │         └── index.html
+│   │   └── maxmind/
+│   │   │   └── GeoLite2-Country.mmdb
 │   │
 │   ├── crowdsec/                    # Security Brain
 │   │   ├── compose.yml

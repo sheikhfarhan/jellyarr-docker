@@ -53,7 +53,16 @@ See if CrowdSec is successfully reading logs and parsing them.
 docker exec crowdsec cscli metrics
 ```
 
-  * *Look for:* `Acquisition Metrics` (Lines read) and `Parser Metrics` (Parseds).
+  * *Look for:* `Acquisition Metrics` (Lines read) and `Parser Metrics` (Parseds); `Local API Alerts` and `Local API Bouncers Metrics`
+
+**Check Community's Decision's Blocklist Count:**
+See if CrowdSec is successfully getting pool of blocklists from upstream.
+
+```bash
+docker exec crowdsec cscli decisions list --origin CAPI | wc -l
+```
+
+  * *Output should in 10K-20K - this confirms server is successfully downloading the "Community Blocklist" (CAPI). If this connection were broken, this number would be 0.*
 
 **List Active Bans:**
 See who is currently blocked.
@@ -82,3 +91,9 @@ Update the threat intelligence rules.
 docker exec crowdsec cscli hub update
 docker exec crowdsec cscli hub upgrade
 ```
+
+**Check CAPI Status:**
+```bash
+docker exec crowdsec csclie capi status
+```
+ * Output shuld be like so: ![](/assets/cscli-capi-status.png)

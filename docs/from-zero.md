@@ -74,10 +74,20 @@
          ```
     *(Save these numbers for our `.env` file in Phase 2).*
 
+6.  **Cloudflare Preparation (DNS & API):**
+
+    * **Why:** Caddy requires an API token to solve DNS challenges (for automatic SSL certificates) and to verify domain ownership. You also need to point your subdomains to this server’s IP address so Caddy can receive the traffic.
+    * **Action 1 (Generate API Token & and Establish Zone DNS Edit and Read):**
+    * **Action 2 (Create DNS Records):**
+        * Create an **A Record** (IPv4) for *every* subdomain we would define in our Caddyfile (e.g., `jellyfin`, `requests`, `beszel`, `gotify`).
+    
+    * Refer to [cloudflare-setup](/docs/cloudflare-setup.md) documentation for details
+
 ### **Why these matter:**
 
   * **Port 8096:** Ensures my phone can cast/play media without going through the reverse proxy loopback.
   * **Step 5:** Solves the "Permission Denied" error I faced with Homepage and the Widgets part, so I am doing this to get that DOCKER_GID before I even install Homepage\!
+  * **Step 6:** If `Zone:Zone:Read` is missing, Caddy will fail with `expected 1 zone, got 0` error).
 
 -----
 
@@ -90,7 +100,7 @@
     ```
 
 2.  **Reconstruct Directories:**
-    Run the script in ![docs/folder-structure.md](docs/folder-structure.md) to create the empty config folders (e.g., `utilities/homepage/config`, `vpn-arr-stack/gluetun/auth`). 
+    Run the script in [docs/folder-structure.md](docs/folder-structure.md) to create the empty config folders (e.g., `utilities/homepage/config`, `vpn-arr-stack/gluetun/auth`). 
 
     The idea is that the folders config/data/store within each of the main sub-folders for each of the services should be created by me/user so that docker root would not create on our behalf, coz if they do, that folder witll have root:root ownership.
 

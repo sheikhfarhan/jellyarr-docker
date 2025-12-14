@@ -11,6 +11,10 @@ log/
 cache/
 .cache/
 store/
+html/
+maxmind/
+beszel_agent_data/
+
 
 # --- Specific Pattern Directories ---
 # These catch your specific naming conventions (e.g., jellyfin-config)

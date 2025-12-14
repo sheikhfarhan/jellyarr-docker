@@ -8,6 +8,28 @@ Hope it will help the future-me when and if i need to redeploy this to another m
 
 -----
 
+## Changelog
+
+<details close>
+  <summary>2025-12-14</summary>
+
+Major update - Adding GoAccess to Caddy's stack and pivoting Maxmind as a sidecar container alongside Caddy + New service Beszel to Utilities' stack.
+
+#### **Added**
+
+  * **Beszel Stack:** Added `beszel-hub` and `beszel-agent` to `Utilities` [compose.yaml](/utilities/compose.yml)
+    * Implemented `dm-X` device mapping to enable monitoring for `dockerapps` and `media` Logical Volumes
+  * **Caddy Stack:** Added `goaccess` and `maxmind` to `Caddy` [compose.yml](/caddy/compose.yml)
+    * `Caddyfile`: Added the blocks for `goaccess` - split between html and data stream
+  * **Documentation:**
+    * Added [setup guide](/docs/beszel-setup.md) for `Beszel`
+    * Improvements to exisiting documentations notably in [caddy.md](/docs/caddy.md) and [crowdsec.md](/docs/crowdsec.md)
+  * **Scripts:** Added new simple [script](/scripts/update-build-xcaddy.sh) to rebuild-update Caddy stack, since we are using xcaddy build - need to rebuild if there are plugins/modules updates
+
+  </details>
+
+-----
+
 ## 🖥️ System Specs
 
   * **Host:** CachyOS (Arch Linux)
@@ -43,7 +65,10 @@ We separate services into two distinct network zones.
 
 -----
 
-## Final Look: Static IP Allocation Table
+## Final Look
+
+<details close>
+    <summary>Static IP Allocation Table</summary>
 
 | IP Address | Service | Stack | Port | Notes |
 | :--- | :--- | :--- | :--- | :--- |
@@ -66,9 +91,14 @@ We separate services into two distinct network zones.
 | `172.20.0.26` | **Dozzle** | `utilities` | 8080 | Log Viewer |
 | `172.20.0.27` | **WUD** | `utilities` | 3001 | Update Notifier |
 | `172.20.0.28` | **Socket Proxy** | `utilities` | 2375 | **Docker-Socket Proxy** |
+| `172.20.0.29` | **GoAccess** | `caddy` | 7890 | Access Logs Analysis |
+| `172.20.0.30` | **Maxmind** | `caddy` | - | **GeoIP Database** |
+| `172.20.0.31` | **Beszel** | `utilities` | 8090 | **Server Monitoring** |
+
+</details>
 
 ---
-## Final Look: Homepage
+## Homepage
 
 ![homepage dashboard](/assets/homepage-dashboard1.png)
 -----
@@ -119,13 +149,29 @@ This project is documented in modular "Deep Dives". Click the links below for de
 * **[Cloudflare Configuration](docs/cloudflare-setup.md):** Setup for API Tokens, DNS Records, and Permissions.
 * **[Firewalld](docs/security-firewall.md):** Firewalld "Software VLAN"
 * **[Utilities](docs/utilities.md):** Management stack & Socket Proxy
+  * [Beszel Setup](/docs/beszel-setup.md)
 
 ## Scripts
 
 * [Update all containers/services](scripts/pull-all.sh)
   
+  <details>
+      <summary>Show</summary>
+  
   ![pull-all example](/assets/pull-all.png)
 
+</br>
+
 * [Compose up (with --force-recreate) all containers/services](scripts/start-stacks.sh)
-  
+
+  </details>
+
+  <details>
+      <summary>Show</summary>
   ![start-stacks example](/assets/start-stacks.png)
+
+  </details>
+
+</br>
+
+* [Rebuild-Update xcaddy](/scripts/update-build-xcaddy.sh)
