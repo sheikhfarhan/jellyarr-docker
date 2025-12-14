@@ -1,11 +1,16 @@
 # --- Global Options ---
 {
+    #debug
+
     # 1. Dynamic DNS
     dynamic_dns {
         provider cloudflare {env.CLOUDFLARE_API_TOKEN}
         domains {
-            {env.ROOT_DOMAIN} jellyfin requests gotify
+            {$ROOT_DOMAIN} jellyfin requests gotify logs ws-logs
         }
+        # CRITICAL FIX: Disable IPv6 updates to prevent private Docker IPs 
+        # from being published to Cloudflare.
+        versions ipv4
     }
 
     # 2. CrowdSec (The "Brain")
@@ -21,16 +26,15 @@
             roll_size 10mb
             roll_keep 5
         }
-        format json {
-            time_local
-        }
+        format json
     }
+
 }
 
 # --------------------------------------------------
 # 1. JELLYFIN (Media Server)
 # --------------------------------------------------
-jellyfin.{env.ROOT_DOMAIN} {
+jellyfin.{$ROOT_DOMAIN} {
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         resolvers 1.1.1.1
@@ -39,11 +43,8 @@ jellyfin.{env.ROOT_DOMAIN} {
     # Define Internal IPs (Docker Network + LAN)
     @internal {
         remote_ip 172.20.0.0/24 192.168.0.0/16 127.0.0.1
-        #IPv6 Ranges (Docker IPv6 + Localhost IPv6)
         remote_ip 2001:db8:abc2::/64 ::1
     }
-
-
 
     # Skip logging for internal IPs
     log_skip @internal
@@ -54,15 +55,13 @@ jellyfin.{env.ROOT_DOMAIN} {
             roll_size 10mb
             roll_keep 5
         }
-        format json {
-            time_local
-        }
+        format json 
     }
 
     # --- GEO-BLOCKING ---
     @geo_sg {
         maxmind_geolocation {
-            db_path "/etc/caddy/GeoLite2-Country.mmdb"
+            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
             allow_countries SG
         }
     }
@@ -88,7 +87,7 @@ jellyfin.{env.ROOT_DOMAIN} {
 # --------------------------------------------------
 # 2. JELLYSEERR (Requests)
 # --------------------------------------------------
-requests.{env.ROOT_DOMAIN} {
+requests.{$ROOT_DOMAIN} {
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         resolvers 1.1.1.1
@@ -97,27 +96,25 @@ requests.{env.ROOT_DOMAIN} {
     # Define Internal IPs (Docker Network + LAN)
     @internal {
         remote_ip 172.20.0.0/24 192.168.0.0/16 127.0.0.1
-        #IPv6 Ranges (Docker IPv6 + Localhost IPv6)
         remote_ip 2001:db8:abc2::/64 ::1
     }
 
     # Skip logging for internal IPs
     log_skip @internal
 
+    # For everything else, log for Crowdsec
     log {
         output file /var/log/caddy/access.log {
             roll_size 10mb
             roll_keep 5
         }
-        format json {
-            time_local
-        }
+        format json 
     }
 
     # Re-use the same logic
     @geo_sg {
         maxmind_geolocation {
-            db_path "/etc/caddy/GeoLite2-Country.mmdb"
+            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
             allow_countries SG
         }
     }
@@ -139,7 +136,7 @@ requests.{env.ROOT_DOMAIN} {
 # --------------------------------------------------
 # 3. GOTIFY (Notifications)
 # --------------------------------------------------
-gotify.{env.ROOT_DOMAIN} {
+gotify.{$ROOT_DOMAIN} {
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         resolvers 1.1.1.1
@@ -155,20 +152,19 @@ gotify.{env.ROOT_DOMAIN} {
     # Skip logging for internal IPs
     log_skip @internal
 
+    # For everything else, log for Crowdsec
     log {
         output file /var/log/caddy/access.log {
             roll_size 10mb
             roll_keep 5
         }
-        format json {
-            time_local
-        }
+        format json 
     }
 
     # Re-use the same logic
     @geo_sg {
         maxmind_geolocation {
-            db_path "/etc/caddy/GeoLite2-Country.mmdb"
+            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
             allow_countries SG
         }
     }
@@ -184,5 +180,63 @@ gotify.{env.ROOT_DOMAIN} {
 
     handle {
         respond "Access Denied: Geo-Block Active" 403
+    }
+}
+
+# --------------------------------------------------
+# 4. LOGS DASHBOARD (GoAccess)
+# --------------------------------------------------
+logs.{$ROOT_DOMAIN} {
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+        resolvers 1.1.1.1
+    }
+
+    # Geo-Block (Singapore Only)
+    @geo_sg {
+        maxmind_geolocation {
+            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
+            allow_countries SG
+        }
+    }
+
+    handle @geo_sg {
+        # PASSWORD REQUIRED
+        basicauth {
+            {$LOGS_USER} {$LOGS_PASS_HASH}
+        }
+        
+        root * /srv/goaccess-report
+        file_server
+    }
+
+    handle {
+        respond "Access Denied" 403
+    }
+}
+
+# --------------------------------------------------
+# 5. WEBSOCKET STREAM (Data)
+# --------------------------------------------------
+ws-logs.{$ROOT_DOMAIN} {
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+        resolvers 1.1.1.1
+    }
+
+    @geo_sg {
+        maxmind_geolocation {
+            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
+            allow_countries SG
+        }
+    }
+
+    handle @geo_sg {
+        # NO PASSWORD (Proxies directly to container)
+        reverse_proxy goaccess:7890
+    }
+
+    handle {
+        respond "Access Denied" 403
     }
 }

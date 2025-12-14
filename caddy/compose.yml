@@ -3,8 +3,11 @@ networks:
     external: true
 
 services:
+# ------------------------------------------------
+# 1. CADDY (Reverse Proxy)
+# ------------------------------------------------
   caddy:
-    build: . # Tells Compose to build the Dockerfile in this folder
+    build: .
     image: caddy-cloudflare-plugin
     container_name: caddy
     hostname: caddy
@@ -23,14 +26,77 @@ services:
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
       - CROWDSEC_API_KEY=${CROWDSEC_API_KEY}
       - ROOT_DOMAIN=${ROOT_DOMAIN}
+      - LOGS_USER=${LOGS_USER}
+      - LOGS_PASS_HASH=${LOGS_PASS_HASH}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile # Caddy's config file
       - ./data:/data                      # For certs & persistent data
       - ./config:/config                  # For Caddy's internal config
       - ./logs:/var/log/caddy
-      - ./GeoLite2-Country.mmdb:/etc/caddy/GeoLite2-Country.mmdb:ro
-    # IGNORE UPDATES: This is a local custom-built image.
-    # WUD cannot check it on Docker Hub (prevents 401 errors).
+      # Mount the Maxmind Folder
+      # Caddy will read from /etc/caddy/maxmind/GeoLite2-Country.mmdb
+      - ./maxmind:/etc/caddy/maxmind:ro
+      # Mount the report so Caddy can serve it
+      - ./goaccess/html:/srv/goaccess-report
+      # WUD cannot check it on Docker Hub (prevents 401 errors).
     labels:
       - "wud.watch=false"
+    restart: unless-stopped
+
+# ------------------------------------------------
+# 2. GOACCESS (Logs)
+# ------------------------------------------------
+  goaccess:
+    image: allinurl/goaccess:latest
+    container_name: goaccess
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.29
+        ipv6_address: 2001:db8:abc2::29
+    ports:
+      - "7890:7890"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ./logs:/var/log/caddy:ro
+      - ./goaccess/data:/srv/data
+      - ./goaccess/html:/srv/report
+      # MOUNT THE SHARED MAXMIND FOLDER
+      - ./maxmind:/srv/maxmind:ro
+    command: >
+      /var/log/caddy/access.log
+      --log-format=CADDY
+      --real-time-html
+      --addr=0.0.0.0
+      --port=7890
+      --output=/srv/report/index.html
+      --db-path=/srv/data
+      --persist
+      --restore
+      --geoip-database=/srv/maxmind/GeoLite2-Country.mmdb
+      --ws-url=wss://ws-logs.${ROOT_DOMAIN}:443
+      --origin='https://logs.${ROOT_DOMAIN}'
+    restart: unless-stopped
+
+# ------------------------------------------------
+# 3. MAXMIND UPDATER (Auto-Updates DBs)
+# ------------------------------------------------
+  maxmind:
+    image: ghcr.io/maxmind/geoipupdate
+    container_name: maxmind
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.30
+        ipv6_address: 2001:db8:abc2::30
+    user: "${PUID}:${PGID}"
+    environment:
+      - GEOIPUPDATE_ACCOUNT_ID=${MAXMIND_ACCOUNT_ID}
+      - GEOIPUPDATE_LICENSE_KEY=${MAXMIND_LICENSE_KEY}
+      - GEOIPUPDATE_EDITION_IDS=GeoLite2-Country
+      - GEOIPUPDATE_FREQUENCY=72
+    volumes:
+      # Maps local 'maxmind' folder to the container's data folder
+      - ./maxmind:/usr/share/GeoIP
     restart: unless-stopped
