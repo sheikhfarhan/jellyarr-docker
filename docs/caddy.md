@@ -177,7 +177,7 @@ Sensitive keys and Variables are passed into the container at runtime, keeping t
   * **`CLOUDFLARE_API_TOKEN`:** Used for DDNS updates and SSL challenges.
   * **`CROWDSEC_API_KEY`:** Generated from the CrowdSec container to authorize the bouncer.
   * **`ROOT_DOMAIN`:** Used to replace the root domain.
-  * **`GoAccess Username& Password`:** Used For basic auth in Caddyfile for logs.mydomain.xyz
+  * **`GoAccess Username & Password`:** Used For basic auth in Caddyfile for logs.mydomain.xyz
   * **`MAXMIND ACCOUNT ID & KEY`:** For allowing auto refresh of GeoIP database upstream
   
 **File:** [`.env.example`](/caddy/.env.example)

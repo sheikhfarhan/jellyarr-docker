@@ -94,6 +94,6 @@ docker exec crowdsec cscli hub upgrade
 
 **Check CAPI Status:**
 ```bash
-docker exec crowdsec csclie capi status
+docker exec crowdsec cscli capi status
 ```
  * Output shuld be like so: ![](/assets/cscli-capi-status.png)

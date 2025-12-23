@@ -96,7 +96,7 @@
 1.  **Clone Repo:**
 
     ```bash
-    git clone git@github.com:sheikhfarhan/docker-jellyfin-arr-automated.git /mnt/pool01/dockerapps
+    git clone git@github.com:sheikhfarhan/jellyarr-docker.git /mnt/pool01/dockerapps
     ```
 
 2.  **Reconstruct Directories:**

@@ -94,6 +94,7 @@ We separate services into two distinct network zones.
 | `172.20.0.29` | **GoAccess** | `caddy` | 7890 | Access Logs Analysis |
 | `172.20.0.30` | **Maxmind** | `caddy` | - | **GeoIP Database** |
 | `172.20.0.31` | **Beszel** | `utilities` | 8090 | **Server Monitoring** |
+| `172.20.0.33` | **Kopia** | `kopia` | 51515 | Backup to Remote |
 
 </details>
 
@@ -142,14 +143,15 @@ This project is documented in modular "Deep Dives". Click the links below for de
 * **[Notification Hub](docs/gotify.md):** Centralized alerts for all services via Gotify and Webhooks.
 * **[Dashboard (Homepage)](docs/homepage.md):** The "Single Pane of Glass" monitoring all services, resources, and security alerts.
 
-### Security & Ingress
+### Security & Backups
 
-* **[Caddy Reverse Proxy](docs/caddy.md):** The "Front Door." Handles SSL, DDNS, and mobile app compatibility.
+* **[Caddy Reverse Proxy](docs/caddy.md):** The "Front Door." Handles SSL, DDNS, and mobile app compatibility. Also includes the side cars of goaccess and maxmind.
 * **[CrowdSec IDS](docs/crowdsec.md):** The "Brain." Reads logs and bans malicious IPs before they touch the application.
 * **[Cloudflare Configuration](docs/cloudflare-setup.md):** Setup for API Tokens, DNS Records, and Permissions.
 * **[Firewalld](docs/security-firewall.md):** Firewalld "Software VLAN"
 * **[Utilities](docs/utilities.md):** Management stack & Socket Proxy
-  * [Beszel Setup](/docs/beszel-setup.md)
+* **[Beszel Setup](/docs/beszel-setup.md)**
+* **[Kopia Setup](/docs/kopia-setup.md)**
 
 ## Scripts
 
@@ -160,16 +162,17 @@ This project is documented in modular "Deep Dives". Click the links below for de
   
   ![pull-all example](/assets/pull-all.png)
 
+  </details>
+
 </br>
 
 * [Compose up (with --force-recreate) all containers/services](scripts/start-stacks.sh)
 
-  </details>
-
   <details>
       <summary>Show</summary>
-  ![start-stacks example](/assets/start-stacks.png)
 
+  ![pull-all example](/assets/start-stacks.png)
+  
   </details>
 
 </br>
