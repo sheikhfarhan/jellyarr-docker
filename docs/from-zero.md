@@ -172,7 +172,7 @@
 
     *Refer to .env.example in each of the sub-folder.*
 
-    *I would also need to refer to the [docs/](docs/) folder for granular details on specific services.*
+    *I would also need to refer to the [docs](/docs) folder for granular details on specific services.*
 
 ### **Verification**
 
