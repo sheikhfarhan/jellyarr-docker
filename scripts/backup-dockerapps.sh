@@ -1,45 +1,54 @@
 #!/bin/bash
-set -e
+set -e # Exit immediately if a command fails (safety)
 
-# 1. Dynamic Setup: Resolve the TRUE location of the script (chasing symlinks)
-# This ensures it works even when run from the /home/user shortcut
-REAL_PATH=$(readlink -f "${BASH_SOURCE[0]}")
-SCRIPT_DIR=$(dirname "$REAL_PATH")
-
-# Now it knows it is in /mnt/pool01/dockerapps/scripts
-ENV_FILE="$SCRIPT_DIR/../.env"
-
-if [ -f "$ENV_FILE" ]; then
-    # Load the variables (PUID, PGID, BACKUP_USER)
-    source "$ENV_FILE"
-else
-    echo "Error: .env file not found at $ENV_FILE"
-    exit 1
-fi
-
-# 2. Validation: Ensure BACKUP_USER was found
-if [ -z "$BACKUP_USER" ]; then
-    echo "Error: BACKUP_USER is not set in your .env file!"
-    exit 1
-fi
-
-# 3. Define Variables (Using the dynamic user)
+# ========================================================
+# CONFIGURATION
+# ========================================================
 SOURCE_DIR="/mnt/pool01/dockerapps"
 DEST_DIR="onedrive:backup/cachyos/dockerapps"
-CONFIG_FILE="/home/$BACKUP_USER/.config/rclone/rclone.conf"
-EXCLUDE_FILE="$SCRIPT_DIR/rclone-excludes.txt"
-LOG_FILE="/home/$BACKUP_USER/rclone-backup.log"
+CONFIG_FILE="/home/sfarhan/.config/rclone/rclone.conf"
+EXCLUDE_FILE="/mnt/pool01/dockerapps/scripts/rclone-excludes.txt"
+LOG_FILE="/home/sfarhan/rclone-backup.log"
+
+# List of containers to stop (Space separated)
+# INCLUDES: Arr Stack, Download Clients, Request Managers
+SERVICES_TO_STOP="sonarr radarr prowlarr bazarr jackett qbittorrent transmission jellyseerr"
+
+# ========================================================
+# SAFETY FUNCTIONS
+# ========================================================
+
+# 1. Define the restart function
+start_containers() {
+    echo "--------------------------------------------------------"
+    echo "POST-BACKUP: Restarting containers..."
+    # We use '|| true' so the script finishes even if one fails to start
+    docker start $SERVICES_TO_STOP || true
+    echo "All services are back online."
+}
+
+# 2. Set the Trap
+# This guarantees that 'start_containers' runs when the script exits,
+# whether it finished successfully OR crashed/failed.
+trap start_containers EXIT
+
+# ========================================================
+# BACKUP PROCESS
+# ========================================================
 
 echo "========================================================"
 echo "Starting Docker Backup: $(date)"
-echo "User: $BACKUP_USER"
 echo "Source: $SOURCE_DIR"
 echo "--------------------------------------------------------"
 
-# 4. Run the Sync
-# Note: We removed 'sudo' here because this script is triggered 
-# by the ROOT crontab, so it is already running as root.
-rclone sync "$SOURCE_DIR" "$DEST_DIR" \
+# 3. PRE-BACKUP: Stop the Services
+echo "Stopping containers to ensure DB integrity..."
+docker stop $SERVICES_TO_STOP || true
+echo "Containers stopped. Starting sync..."
+
+# 4. Run Rclone
+# We rely on the 'trap' to restart containers after this finishes
+sudo rclone sync "$SOURCE_DIR" "$DEST_DIR" \
     --config "$CONFIG_FILE" \
     --exclude-from "$EXCLUDE_FILE" \
     --log-file "$LOG_FILE" \
@@ -48,10 +57,6 @@ rclone sync "$SOURCE_DIR" "$DEST_DIR" \
     --transfers=8 \
     --delete-excluded
 
-# 5. Fix Log Ownership
-# Since root ran this, the log file is owned by root. 
-# We change it back to user so can read/delete it.
-chown "$BACKUP_USER":"$BACKUP_USER" "$LOG_FILE"
-
-echo "Backup Complete: $(date)"
 echo "========================================================"
+echo "Backup Process Complete: $(date)"
+# Script exits here -> Trap triggers -> Containers restart
