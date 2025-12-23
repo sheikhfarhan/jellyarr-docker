@@ -1,0 +1,50 @@
+networks:
+  dockerapps-net:
+    external: true
+
+services:
+  kopia:
+    image: kopia/kopia:latest
+    container_name: kopia
+    hostname: kopia
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.33
+        ipv6_address: 2001:db8:abc2::33
+    ports:
+    # Expose locally for setup, then close it once Caddy is ready
+      - 51515:51515
+    # Enable FUSE for mounting snapshots (Optional but recommended)
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse:/dev/fuse
+    environment:
+      - TZ=${TZ} 
+      # This is the password to login to the Web UI
+      - KOPIA_SERVER_USERNAME=${KOPIA_SERVER_USERNAME}
+      - KOPIA_SERVER_PASSWORD=${KOPIA_SERVER_PASSWORD}
+      # REPOSITORY ENCRYPTION KEY (CRITICAL)
+      # This MUST match the encryption password we created in the UI setup step.
+      # If this is missing, Kopia cannot start.
+      - KOPIA_PASSWORD=${KOPIA_REPO_PASSWORD}
+    volumes:
+      # 1. Kopia State (Config & Cache)
+      - ./config:/app/config
+      - ./cache:/app/cache
+      - ./logs:/app/logs
+      # 2. SOURCE DATA (Mounting our DockerApps Pool)
+      # We mount it to /source so Kopia sees the whole structure
+      - /mnt/pool01/dockerapps:/source/dockerapps:ro
+      # This is for when we want to restore to a particular folder first
+      - /home/sfarhan/kopia-restores:/restore-target
+
+    # Start Kopia in Server Mode
+    command:
+      - server
+      - start
+      - --insecure             # Allow HTTP (since we will use internal network -> Caddy later)
+      - --address=0.0.0.0:51515
+      - --override-hostname=mediaserver # Keeps host consistent in snapshots
+      - --disable-csrf-token-checks
+    restart: unless-stopped

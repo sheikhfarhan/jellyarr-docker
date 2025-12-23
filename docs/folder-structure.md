@@ -18,8 +18,12 @@ This hierarchy reflects the live server state. It respects the "Two-Zone" networ
 │   │   │   └── config/              # YAML configs (services, widgets, settings)
 │   │   ├── portainer/
 │   │   │   └── data/                # Portainer database
-│   │   └── wud/
-│   │       └── store/               # WUD state & history
+│   │   ├── wud/
+│   │   │   └── store/               # WUD state & history
+│   │   ├── beszel/
+│   │   │   └── data/                # Beszel Hub & Agent
+│   │   │   └── beszel_agent_data/  
+│   │   └── dozzle                   # Containers' Logs Viewer
 │   │
 │   ├── caddy/                       # Security Ingress
 │   │   ├── compose.yml
@@ -34,13 +38,14 @@ This hierarchy reflects the live server state. It respects the "Two-Zone" networ
 │   │   └── goaccess/
 │   │   │   └── data/
 │   │   │   └── html/
-│   │   │         └── index.html
+│   │   │       └── index.html
 │   │   └── maxmind/
-│   │   │   └── GeoLite2-Country.mmdb
+│   │       └── GeoLite2-Country.mmdb
 │   │
 │   ├── crowdsec/                    # Security Brain
 │   │   ├── compose.yml
 │   │   ├── .env   
+│   │   ├── acquis.yaml 
 │   │   ├── config/
 │   │   └── data/
 │   │
@@ -56,17 +61,24 @@ This hierarchy reflects the live server state. It respects the "Two-Zone" networ
 │   │   ├── jellyfin-cache/
 │   │   └── jellyseerr-config/
 │   │
-│   └── vpn-arr-stack/               # Automation Engine
+│   ├── vpn-arr-stack/               # Automation Engine
+│   │   ├── compose.yml
+│   │   ├── .env   
+│   │   ├── gluetun/
+│   │   │   ├── config/              # Disposable (servers.json)
+│   │   │   └── auth/                # Secrets (config.toml)
+│   │   ├── radarr/
+│   │   ├── sonarr/
+│   │   ├── ... (other arr apps)
+│   │   └── profilarr/
+│   │
+│   └── kopia/                       # Backup Engine
 │       ├── compose.yml
 │       ├── .env   
-│       ├── gluetun/
-│       │   ├── config/              # Disposable (servers.json)
-│       │   └── auth/                # Secrets (config.toml)
-│       ├── radarr/
-│       ├── sonarr/
-│       ├── ... (other arr apps)
-│       └── profilarr/
-│
+│       ├── config/
+│       ├── cache/
+│       └── logs/
+│        
 ├── media/                           # (LV: lv_media)
 │   ├── downloads/                   # Ingest Zone
 │   │   ├── incomplete/              # Active downloads

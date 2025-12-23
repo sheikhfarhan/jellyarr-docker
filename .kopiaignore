@@ -1,0 +1,46 @@
+# --- Directories (Recursive) ---
+# These rules ignore these folder names anywhere in the project
+**/logs/
+**/log/
+**/cache/
+**/.cache/
+**/MediaCover/
+**/mediacover/
+**/metadata/
+**/transcodes/
+**/scgi_log/
+**/regex_patterns/
+**/definitions/
+**/Definations/
+
+# --- Specific Pattern Directories ---
+# These catch our specific naming conventions
+**/*-cache/
+**/goaccess/data/
+
+# --- VERSION CONTROL ---
+.git/
+.gitignore
+
+# --- System & Misc ---
+.DS_Store
+Thumbs.db
+.Trash-1000/
+lost+found
+
+# Specific log files not in folders
+**/*.log
+**/log.txt
+**/logs.txt
+
+# --- CROWDSEC ---
+# Ignores downloaded rules and the local ban-history database
+**/crowdsec/hub/**
+**/crowdsec/config/hub/**
+**/crowdsec/config/scenarios/**
+**/crowdsec/config/parsers/**
+**/crowdsec/config/postoverflows/**
+**/crowdsec/config/collections/**
+**/crowdsec/config/patterns/**
+**/crowdsec/config/contexts/**
+**/crowdsec/data/**
