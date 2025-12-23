@@ -7,8 +7,10 @@ STACKS=(
   "crowdsec"
   "gotify"
   "jellyfin"
+  "kopia"
   "utilities"
   "vpn-arr-stack"
+  
 )
 
 BASE_DIR="/mnt/pool01/dockerapps"
@@ -39,4 +41,4 @@ for stack in "${STACKS[@]}"; do
   fi
 done
 
-echo "🎉 All images prepared! Run 'start-stacks.sh' or restart specific services to apply."
+echo "🎉 All images prepared! Run 'start-all' or restart specific services to apply."
