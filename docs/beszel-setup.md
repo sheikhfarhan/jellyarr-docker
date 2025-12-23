@@ -74,9 +74,9 @@ Add to our `utilities`stack. Note the static IPs to match our network scheme.
 services:
   # ... (Socket Proxy service must be running) ...
 
-  # ------------------------------------------------
-  # BESZEL HUB (Dashboard)
-  # ------------------------------------------------
+   ##################################################
+  # 6. BESZEL HUB (Monitoring Server)
+  ##################################################
   beszel-hub:
     image: henrygd/beszel:latest
     container_name: beszel-hub
@@ -87,13 +87,15 @@ services:
         ipv6_address: 2001:db8:abc2::31
     ports:
       - 8090:8090
+    environment:
+      - TZ=${TZ}   
     volumes:
       - ./beszel/data:/beszel_data
     restart: unless-stopped
 
-  # ------------------------------------------------
-  # BESZEL AGENT (Collector)
-  # ------------------------------------------------
+##################################################
+  # 7. BESZEL AGENT (Metrics Collector)
+  ##################################################
   beszel-agent:
     image: henrygd/beszel-agent:latest
     container_name: beszel-agent
@@ -103,40 +105,30 @@ services:
         ipv4_address: 172.20.0.32
         ipv6_address: 2001:db8:abc2::32
     environment:
-      # Port for the Agent to listen on (Default 45876)
+      - TZ=${TZ}   
       - LISTEN=45876
-      # Secrets provided by Hub (Add System -> Docker)
       - KEY=${MEDIASVR_PUBLIC_KEY}
       - TOKEN=${MEDIASVR_TOKEN}
-      # Connection details
       - HUB_URL=http://172.20.0.31:8090
-      # Use Socket Proxy for Docker Stats (Security)
+      # Use socket-proxy
       - DOCKER_HOST=tcp://socket-proxy:2375
-      # Force the Main Chart to look at my actual CachyOS Root - to change accordingly for new system
-      # (This prevents it from accidentally monitoring the container overlay)
-      - FILESYSTEM=/dev/nvme0n1p2
-      
+      # Make the MAIN Dashboard Gauge track CachyOS OS
+      - FILESYSTEM=/dev/nvme1n1p2 
     volumes:
-      # 1. Root Filesystem (Read-Only) - to change accordingly for new system
-      # We mount root so the agent can read the stats defined in FILESYSTEM
-      - /:/extra-filesystems/nvme0n1p2__CachyOS:ro
-
-      # 2. Docker Apps (dm-0) - to change accordingly for new system
-      # Confirmed via lsblk that DockerApps is on this LVM
+      - /etc/localtime:/etc/localtime:ro
+      # CachyOS Root directory - to change accordingly for new system
+      - /:/extra-filesystems/nvme1n1p2__CachyOS:ro
+      # DOCKER APPS (LVM: dm-0) - - to change accordingly for new system
       - /mnt/pool01/dockerapps/.beszel:/extra-filesystems/dm-0__DockerApps:ro
-
-      # 3. Media (dm-2) - to change accordingly for new system
-      # Confirmed via lsblk that Media is on this LVM
+      # MEDIA (LVM: dm-2) - - to change accordingly for new system
       - /mnt/pool01/media/.beszel:/extra-filesystems/dm-2__Media:ro
-
-      # 4. Games Folder (Optional)
-      # If I want to monitor this, create the .beszel folder first:
-      # mkdir -p /mnt/pool01/games/.beszel
-      # Then uncomment the line below
-      # - /mnt/pool01/games/.beszel:/extra-filesystems/dm-1__Games:ro
-
-      # Optional: System Bus for systemd monitoring
+      # Library (LVM: dm-3) - - to change accordingly for new system
+      - /mnt/pool01/library/.beszel:/extra-filesystems/dm-3__Library:ro
+      # VM Lab (Crucial SSD)
+      - /mnt/vm_lab:/extra-filesystems/sda5__VM-Lab-SSD:ro
+      # Optional - listing systemd services
       - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
+
     restart: unless-stopped
     depends_on:
       - socket-proxy

@@ -62,9 +62,10 @@ services:
     volumes:
       - ./homepage/config:/app/config
       - ./homepage/config/icons:/app/public/icons
-      # Host Disk Mounts (Unchanged)
+      # Host Disk Mounts
       - /mnt/pool01/media:/mnt/media_disk:ro
       - /mnt/pool01/games:/mnt/games_disk:ro
+      - /mnt/pool01/library:/mnt/library_disk:ro
     restart: unless-stopped
     depends_on:
       - socket-proxy
@@ -184,20 +185,25 @@ services:
       - HUB_URL=http://172.20.0.31:8090
       # Use socket-proxy
       - DOCKER_HOST=tcp://socket-proxy:2375
-      # Force the Main Chart to look at my actual CachyOS Root - to change accordingly for new system
-      # (This prevents it from accidentally monitoring the container overlay)
-      - FILESYSTEM=/dev/nvme0n1p2
+      # Make the MAIN Dashboard Gauge track CachyOS OS
+      - FILESYSTEM=/dev/nvme1n1p2 
     volumes:
       - /etc/localtime:/etc/localtime:ro
       # CachyOS Root directory - to change accordingly for new system
-      - /:/extra-filesystems/nvme0n1p2__CachyOS:ro
+      - /:/extra-filesystems/nvme1n1p2__CachyOS:ro
       # DOCKER APPS (LVM: dm-0) - - to change accordingly for new system
       - /mnt/pool01/dockerapps/.beszel:/extra-filesystems/dm-0__DockerApps:ro
       # MEDIA (LVM: dm-2) - - to change accordingly for new system
       - /mnt/pool01/media/.beszel:/extra-filesystems/dm-2__Media:ro
+      # Library (LVM: dm-3) - - to change accordingly for new system
+      - /mnt/pool01/library/.beszel:/extra-filesystems/dm-3__Library:ro
+      # VM Lab (Crucial SSD)
+      - /mnt/vm_lab:/extra-filesystems/sda5__VM-Lab-SSD:ro
       # Optional - listing systemd services
       - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
+
     restart: unless-stopped
     depends_on:
       - socket-proxy
       - beszel-hub
+
