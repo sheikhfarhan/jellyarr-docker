@@ -68,7 +68,10 @@ services:
       - /mnt/pool01/library:/mnt/library_disk:ro
     restart: unless-stopped
     depends_on:
-      - socket-proxy
+      socket-proxy:
+        condition: service_started
+      beszel-hub:
+        condition: service_healthy
 
   ##################################################
   # 3. DOZZLE (Log Viewer)
@@ -164,6 +167,13 @@ services:
       - TZ=${TZ}   
     volumes:
       - ./beszel/data:/beszel_data
+    healthcheck:
+      # Use the built-in health command provided by the Beszel binary
+      test: ["CMD", "/beszel", "health", "--url", "http://localhost:8090"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     restart: unless-stopped
 
 ##################################################
