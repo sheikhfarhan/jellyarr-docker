@@ -15,12 +15,12 @@ services:
       - PUID=${PUID}
       - PGID=${PGID}
       - TZ=${TZ}
-      - COLLECTIONS=crowdsecurity/caddy crowdsecurity/http-cve crowdsecurity/whitelist-good-actors crowdsecurity/linux
+      - COLLECTIONS=crowdsecurity/caddy crowdsecurity/http-cve crowdsecurity/whitelist-good-actors crowdsecurity/linux firix/authentik
     volumes:
       - ./config:/etc/crowdsec:rw
       - ./acquis.yaml:/etc/crowdsec/acquis.yaml:ro
       - /mnt/pool01/dockerapps/caddy/logs:/var/log/caddy:ro
-      # --- (Bind Mount) ---
-      # We map the database to a local folder so rclone can back it up
       - ./data:/var/lib/crowdsec/data/
+      # Added Docker Socket to monitor Authentik's instance
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
