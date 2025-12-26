@@ -83,7 +83,7 @@ services:
       - WEBUI_PORT=8080 # This is the internal port. It is accessible on 8080 from the Gluetun service network.
       - WEBUI_HOST=* # Allows other containers to access the Web UI for integration
     volumes:
-      - ./qbittorent/config:/config
+      - ./qbittorrent/config:/config
       - /mnt/pool01/media:/media
     healthcheck:
       test: curl -f --silent --output /dev/null http://localhost:8080 || exit 1
