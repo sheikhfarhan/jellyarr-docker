@@ -1,26 +1,24 @@
 # --- Global Options ---
 {
-    #debug
+    #debug (uncomment this for troubleshooting)
 
-    # 1. Dynamic DNS
     dynamic_dns {
         provider cloudflare {env.CLOUDFLARE_API_TOKEN}
         domains {
-            {$ROOT_DOMAIN} jellyfin requests gotify logs ws-logs
+            {$ROOT_DOMAIN} jellyfin requests gotify logs ws-logs auth
         }
-        # CRITICAL FIX: Disable IPv6 updates to prevent private Docker IPs 
-        # from being published to Cloudflare.
+        # Forcing cloudlfare ddns to not create ipv6 entries in dns records for the subdomains, as it breaks some of our services.
         versions ipv4
     }
 
-    # 2. CrowdSec (The "Brain")
+    # Caddy x Crowdsec
     crowdsec {
         api_url http://crowdsec:8080
         api_key {env.CROWDSEC_API_KEY}
         ticker_interval 60s
     }
 
-    # 3. Internal Logging
+    # This is for internal caddy startup, processes and warn/error logs
     log {
         output file /var/log/caddy/caddy.log {
             roll_size 10mb
@@ -28,215 +26,157 @@
         }
         format json
     }
-
 }
 
-# --------------------------------------------------
+# ==============================================================================
+# SNIPPETS (Reusable Logic)
+# ==============================================================================
+
+# 1. LOGGING & INTERNAL BYPASS
+# This snippet handles skipping logs for internal IPs and formatting the rest.
+(logging) {
+    @internal {
+        remote_ip 172.20.0.0/24 192.168.0.0/16 127.0.0.1 2001:db8:abc2::/64 ::1
+    }
+    log_skip @internal
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10mb
+            roll_keep 5
+        }
+        format json 
+    }
+}
+
+# 2. SECURITY LAYER (Geo-Block + CrowdSec)
+# This snippet blocks all countries instantly (except for SG), then checks CrowdSec.
+(security) {
+    # Block anyone NOT from Singapore
+    @geoblock {
+        not maxmind_geolocation {
+            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
+            allow_countries SG
+        }
+    }
+    respond @geoblock "Access Denied: Geo-Block Active" 403
+
+    # If they passed Geo-Block, check CrowdSec
+    route {
+        crowdsec
+    }
+}
+
+# 3. AUTHENTIK (The Doorman)
+(authentik) {
+    forward_auth http://authentik-server:9000 {
+        uri /outpost.goauthentik.io/auth/caddy
+        copy_headers X-Authentik-Username X-Authentik-Groups X-Authentik-Email X-Authentik-Name X-Authentik-Uid X-Authentik-Jwt X-Authentik-Meta-Jwks X-Authentik-Meta-Outpost X-Authentik-Meta-Provider X-Authentik-Meta-App X-Authentik-Meta-Version
+    }
+}
+
+# ==============================================================================
+# SITES
+# ==============================================================================
+
 # 1. JELLYFIN (Media Server)
-# --------------------------------------------------
 jellyfin.{$ROOT_DOMAIN} {
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         resolvers 1.1.1.1
     }
+    import logging
+    import security
 
-    # Define Internal IPs (Docker Network + LAN)
-    @internal {
-        remote_ip 172.20.0.0/24 192.168.0.0/16 127.0.0.1
-        remote_ip 2001:db8:abc2::/64 ::1
-    }
-
-    # Skip logging for internal IPs
-    log_skip @internal
-    
-    # For everything else, log for Crowdsec
-    log {
-        output file /var/log/caddy/access.log {
-            roll_size 10mb
-            roll_keep 5
-        }
-        format json 
-    }
-
-    # --- GEO-BLOCKING ---
-    @geo_sg {
-        maxmind_geolocation {
-            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
-            allow_countries SG
-        }
-    }
-
-    # Allowed Traffic Handler
-    handle @geo_sg {
-        # 1. CrowdSec Check
-        route {
-            crowdsec
-        }
-        # Reverse Proxy
-        reverse_proxy http://jellyfin:8096 {
-            header_up X-Real-IP {remote_host}
-         }
-    }
-
-    # Blocked Traffic Handler
-    handle {
-        respond "Access Denied: Geo-Block Active" 403
+    reverse_proxy http://jellyfin:8096 {
+        header_up X-Real-IP {remote_host}
     }
 }
 
-# --------------------------------------------------
 # 2. JELLYSEERR (Requests)
-# --------------------------------------------------
 requests.{$ROOT_DOMAIN} {
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         resolvers 1.1.1.1
     }
+    import logging
+    import security
+    
+    # Authentik
+    import authentik
 
-    # Define Internal IPs (Docker Network + LAN)
-    @internal {
-        remote_ip 172.20.0.0/24 192.168.0.0/16 127.0.0.1
-        remote_ip 2001:db8:abc2::/64 ::1
-    }
-
-    # Skip logging for internal IPs
-    log_skip @internal
-
-    # For everything else, log for Crowdsec
-    log {
-        output file /var/log/caddy/access.log {
-            roll_size 10mb
-            roll_keep 5
-        }
-        format json 
-    }
-
-    # Re-use the same logic
-    @geo_sg {
-        maxmind_geolocation {
-            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
-            allow_countries SG
-        }
-    }
-
-    handle @geo_sg {
-        route {
-            crowdsec
-        }
-        reverse_proxy http://jellyseerr:5055 {
-            header_up X-Real-IP {remote_host}
-        }
-    }
-
-    handle {
-        respond "Access Denied: Geo-Block Active" 403
+    reverse_proxy http://jellyseerr:5055 {
+        header_up X-Real-IP {remote_host}
     }
 }
 
-# --------------------------------------------------
 # 3. GOTIFY (Notifications)
-# --------------------------------------------------
 gotify.{$ROOT_DOMAIN} {
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         resolvers 1.1.1.1
     }
+    import logging
+    import security
 
-    # Define Internal IPs (Docker Network + LAN)
-    @internal {
-        remote_ip 172.20.0.0/24 192.168.0.0/16 127.0.0.1
-        #IPv6 Ranges (Docker IPv6 + Localhost IPv6)
-        remote_ip 2001:db8:abc2::/64 ::1
+    # 1. Define API paths (These bypass Authentik)
+    # Added /current* to fix the Android App login issue
+    @api {
+        path /message* /application* /client* /stream* /plugin* /current* /version* /static*
     }
 
-    # Skip logging for internal IPs
-    log_skip @internal
-
-    # For everything else, log for Crowdsec
-    log {
-        output file /var/log/caddy/access.log {
-            roll_size 10mb
-            roll_keep 5
-        }
-        format json 
-    }
-
-    # Re-use the same logic
-    @geo_sg {
-        maxmind_geolocation {
-            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
-            allow_countries SG
-        }
-    }
-
-    handle @geo_sg {
-        route {
-            crowdsec
-        }
+    # 2. IF it is an API call -> Just Proxy (No Auth)
+    handle @api {
         reverse_proxy http://gotify:80 {
             header_up X-Real-IP {remote_host}
         }
     }
 
+    # 3. IF it is NOT an API call (The Web UI) -> Authentik -> Proxy
     handle {
-        respond "Access Denied: Geo-Block Active" 403
+        import authentik
+        reverse_proxy http://gotify:80 {
+            header_up X-Real-IP {remote_host}
+        }
     }
 }
 
-# --------------------------------------------------
 # 4. LOGS DASHBOARD (GoAccess)
-# --------------------------------------------------
 logs.{$ROOT_DOMAIN} {
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         resolvers 1.1.1.1
     }
 
-    # Geo-Block (Singapore Only)
-    @geo_sg {
-        maxmind_geolocation {
-            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
-            allow_countries SG
-        }
-    }
+    import logging
+    import security
 
-    handle @geo_sg {
-        # PASSWORD REQUIRED
-        basicauth {
-            {$LOGS_USER} {$LOGS_PASS_HASH}
-        }
-        
-        root * /srv/goaccess-report
-        file_server
-    }
-
-    handle {
-        respond "Access Denied" 403
-    }
+    # Replaces BasicAuth
+    import authentik
+    
+    root * /srv/goaccess-report
+    file_server
 }
 
-# --------------------------------------------------
-# 5. WEBSOCKET STREAM (Data)
-# --------------------------------------------------
+# 5. WEBSOCKET STREAM (Data for GoAccess)
 ws-logs.{$ROOT_DOMAIN} {
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         resolvers 1.1.1.1
     }
+    # Security check required, but NO Authentik (it breaks websockets)
+    import security
 
-    @geo_sg {
-        maxmind_geolocation {
-            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
-            allow_countries SG
-        }
-    }
+    reverse_proxy goaccess:7890
+}
 
-    handle @geo_sg {
-        # NO PASSWORD (Proxies directly to container)
-        reverse_proxy goaccess:7890
+# 6. AUTHENTIK (Identity Provider)
+auth.{$ROOT_DOMAIN} {
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+        resolvers 1.1.1.1
     }
+    # Replace the manual geoblock lines with crowdsec's route, since we have included authentik.log into crowdsec parsing successfully
+    import security
 
-    handle {
-        respond "Access Denied" 403
-    }
+    reverse_proxy http://authentik-server:9000
 }
