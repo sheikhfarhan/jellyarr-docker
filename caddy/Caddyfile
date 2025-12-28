@@ -5,7 +5,7 @@
     dynamic_dns {
         provider cloudflare {env.CLOUDFLARE_API_TOKEN}
         domains {
-            {$ROOT_DOMAIN} jellyfin requests gotify logs ws-logs auth
+            {$ROOT_DOMAIN} jellyfin requests gotify auth
         }
         # Forcing cloudlfare ddns to not create ipv6 entries in dns records for the subdomains, as it breaks some of our services.
         versions ipv4
@@ -140,42 +140,13 @@ gotify.{$ROOT_DOMAIN} {
     }
 }
 
-# 4. LOGS DASHBOARD (GoAccess)
-logs.{$ROOT_DOMAIN} {
-    tls {
-        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-        resolvers 1.1.1.1
-    }
-
-    import logging
-    import security
-
-    # Replaces BasicAuth
-    import authentik
-    
-    root * /srv/goaccess-report
-    file_server
-}
-
-# 5. WEBSOCKET STREAM (Data for GoAccess)
-ws-logs.{$ROOT_DOMAIN} {
-    tls {
-        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-        resolvers 1.1.1.1
-    }
-    # Security check required, but NO Authentik (it breaks websockets)
-    import security
-
-    reverse_proxy goaccess:7890
-}
-
-# 6. AUTHENTIK (Identity Provider)
+# 4. AUTHENTIK (Identity Provider)
 auth.{$ROOT_DOMAIN} {
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         resolvers 1.1.1.1
     }
-    # Replace the manual geoblock lines with crowdsec's route, since we have included authentik.log into crowdsec parsing successfully
+    # Replace the manual geoblock lines with crowdsec's route, since we have included authentik.yaml into crowdsec's acquisition
     import security
 
     reverse_proxy http://authentik-server:9000
