@@ -9,6 +9,8 @@
 
 This repository documents the architecture and configuration of a self-hosted media server. Unlike standard "copy-paste" stacks, this system features a **custom "Split-Network" architecture** that isolates P2P traffic within a VPN bubble while maintaining direct access for media streaming and management.
 
+![homepage dashboard](/assets/homepage-dashboard1.png)
+
 ---
 
 ## Key Features
