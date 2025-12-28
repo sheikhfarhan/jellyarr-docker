@@ -16,6 +16,12 @@ maxmind/
 beszel_agent_data/
 
 
+# -- For Authentik ---
+certs/
+database/
+media/
+templates/
+
 # --- Specific Pattern Directories ---
 # These catch your specific naming conventions (e.g., jellyfin-config)
 *-config/
@@ -37,6 +43,7 @@ Thumbs.db
 # --- Exceptions (Allow specific safe configs) ---
 !homepage/config/
 !homepage/icons/
+!crowdsec/config/acquis.d/
 
 # Only ignore the real secret file
 vpn-arr-stack/gluetun/auth/config.toml

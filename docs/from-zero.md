@@ -79,7 +79,7 @@
     * **Why:** Caddy requires an API token to solve DNS challenges (for automatic SSL certificates) and to verify domain ownership. You also need to point your subdomains to this server’s IP address so Caddy can receive the traffic.
     * **Action 1 (Generate API Token & and Establish Zone DNS Edit and Read):**
     * **Action 2 (Create DNS Records):**
-        * Create an **A Record** (IPv4) for *every* subdomain we would define in our Caddyfile (e.g., `jellyfin`, `requests`, `beszel`, `gotify`).
+        * Create an **A Record** (IPv4) for *every* subdomain we would define in our Caddyfile (e.g., `jellyfin`, `requests`, `gotify`, `auth`).
     
     * Refer to [cloudflare-setup](/docs/cloudflare-setup.md) documentation for details
 

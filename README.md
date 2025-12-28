@@ -1,180 +1,175 @@
-# Media Server (Docker Compose + Jellyfin + Arr Stacks)
+# 🐳 Media Server (Jellyfin + \*Arr Stack + Caddy)
 
-**An automated media stack running on Arch Linux (CachyOS).**
+> **"A fully automated media stack running on Arch Linux (CachyOS)."**
 
-This repo documents the journey of building a self-hosted media server. It features a **"Split-Network" architecture** that balances VPN isolation for downloads with direct access for streaming, protected by security layers.
+![Status](https://img.shields.io/badge/Status-Production-success)
+![OS](<https://img.shields.io/badge/OS-CachyOS_(Arch)-blue>)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Security](https://img.shields.io/badge/Security-CrowdSec_%2B_Authentik-red)
 
-Hope it will help the future-me when and if i need to redeploy this to another machine/dedicated server. And of course, if it helps others to make sense of things and deploy something similar, it would be awesome too! :)
+This repository documents the architecture and configuration of a self-hosted media server. Unlike standard "copy-paste" stacks, this system features a **custom "Split-Network" architecture** that isolates P2P traffic within a VPN bubble while maintaining direct access for media streaming and management.
 
------
+---
 
-## Changelog
+## Key Features
 
-<details close>
-  <summary>2025-12-14</summary>
+### 1. 🛡️ The "Two-Zone" Network
 
-Major update - Adding GoAccess to Caddy's stack and pivoting Maxmind as a sidecar container alongside Caddy + New service Beszel to Utilities' stack.
+We physically separate the network stacks.
 
-#### **Added**
+- **Zone 1 (Trusted App Net):** Services like Jellyfin, Radarr, and Caddy run on a custom bridge (`172.20.0.0/24`) with **Static IPs** for reliability.
+- **Zone 2 (VPN Bubble):** Download clients (qBittorrent, Transmission) have **NO** IP address of their own. They share the network stack of a `gluetun` container, forcing 100% of bytes through the AirVPN WireGuard tunnel.
 
-  * **Beszel Stack:** Added `beszel-hub` and `beszel-agent` to `Utilities` [compose.yaml](/utilities/compose.yml)
-    * Implemented `dm-X` device mapping to enable monitoring for `dockerapps` and `media` Logical Volumes
-  * **Caddy Stack:** Added `goaccess` and `maxmind` to `Caddy` [compose.yml](/caddy/compose.yml)
-    * `Caddyfile`: Added the blocks for `goaccess` - split between html and data stream
-  * **Documentation:**
-    * Added [setup guide](/docs/beszel-setup.md) for `Beszel`
-    * Improvements to exisiting documentations notably in [caddy.md](/docs/caddy.md) and [crowdsec.md](/docs/crowdsec.md)
-  * **Scripts:** Added new simple [script](/scripts/update-build-xcaddy.sh) to rebuild-update Caddy stack, since we are using xcaddy build - need to rebuild if there are plugins/modules updates
+### 2. ⚡ "Atomic Moves" (Hardlinks)
 
-  </details>
+Storage is efficient but (as per for my use-case and preference), no redundancies.
 
------
+- By mapping the host's LVM volume (`/mnt/pool01/media`) to the exact same path (`/media`) inside every container, we utilize **Hardlinks**.
+- A 50GB remix file moving from "Downloads" to "Library" takes **0 seconds** and **0 extra bytes** of disk space.
 
-## 🖥️ System Specs
+### 3. 🔐 Defense-in-Depth
 
-  * **Host:** CachyOS (Arch Linux)
-  * **Hardware:** AMD 7600x, 32GB RAM, AQC113C 10GbE NIC, Radeon 5600xt
-  * **Storage:** 2 x 1TB NVMEs in an LVM (`vg_pool01`) mounted at `/mnt/pool01`
-  * **Network:** Custom Bridge (`dockerapps-net`) with IPv6 + Reverse Proxy (Caddy)
+Layering security elements, since we do have exposed services to the internet.
 
------
+- **Layer 1:** **Firewalld** blocks containers from scanning our home LAN (`192.168.x.x`).
+- **Layer 2:** **Caddy** acts as the ingress, backed by **GeoIP** (Singapore Only) blocking.
+- **Layer 3:** **CrowdSec** acts as the "Brain," reading logs and banning malicious IPs automatically.
+- **Layer 4:** **Authentik** provides centralized SSO for interfaces.
 
-## 🏗️ Architecture Overview
+---
 
-### The "Two-Zone" Network Model
+## 🖥️ System Specifications
 
-We separate services into two distinct network zones.
+| Component   | Detail                                   |
+| :---------- | :--------------------------------------- |
+| **OS**      | CachyOS (Arch Linux Optimized)           |
+| **MOBO**    | X870 Asrock Pro Rs                       |
+| **CPU**     | AMD Ryzen 5 7600X                        |
+| **RAM**     | 32GB DDR5                                |
+| **GPU**     | Radeon RX 5600 XT (Transcoding / SR-IOV) |
+| **Storage** | 2x 1TB NVMe LVM Pool (`/mnt/pool01`) + 1 x 500GB Crucial SSD for VMs   |
+| **Network** | Marvell AQC113C 10GbE                    |
 
-  * **Zone 1: Trusted Apps (`dockerapps-net`)**
-      * *Services:* Jellyfin, Jellyseerr, Caddy, Radarr, Sonarr, Bazarr, Homepage etc..
-      * *Behavior:* Uses host internet for metadata & streaming. Accessible via Reverse Proxy.
+---
 
-  * **Zone 2: The VPN Bubble (`service:gluetun`)**
-      * *Services:* qBittorrent, Transmission, FlareSolverr.
-      * *Behavior:* These containers have **NO** IP address. They use `gluetun`'s network stack to force 100% of traffic through the AirVPN WireGuard tunnel.
-      * *Paid Service:* Airvpn Subscription
+## 📚 Documentation Index
 
-### The Security Stack
+Click the links below for deep-dives into specific components of the stack.
 
-  * **Ingress:** **Caddy** (Ports 80/443) with Cloudflare DNS validation.
-  * **Defense:**
-      * **CrowdSec:** IPS reading Caddy logs to ban malicious IPs.
-      * **GeoIP:** Blocks all non-Singaporean traffic at the proxy level.
-      * **Socket Proxy:** Read-only gateway for docker.sock, preventing container breakout.
-  * **Firewall:** Host-level `firewalld` rules preventing Docker containers from scanning the home LAN.
+### 🚀 Getting Started
 
------
+| Topic                                            | Description                                                                                      |
+| :----------------------------------------------- | :----------------------------------------------------------------------------------------------- |
+| **[Deployment Guide](docs/from-zero.md)**        | **Read This First.** The "Invisible" Host-OS setups required before running `docker compose up`. |
+| **[Folder Structure](docs/folder-structure.md)** | The "Golden Tree" directory map ensuring Atomic Moves work.                                      |
+| **[Network Architecture](docs/networking.md)**   | Understanding the `dockerapps-net` vs. `service:gluetun` design.                                 |
+| **[Storage & LVM](docs/storage.md)**             | How the NVMe pool is managed and mounted.                                                        |
 
-## Final Look
+### 🧩 Application Stacks
 
-<details close>
-    <summary>Static IP Allocation Table</summary>
+| Stack                 | Services                             | Documentation                                |
+| :-------------------- | :----------------------------------- | :------------------------------------------- |
+| **Media Core**        | Jellyfin, Jellyseerr                 | **[Docs](docs/jellyfin-stack.md)**           |
+| **Automation Engine** | Gluetun, Radarr, Sonarr, Bazarr      | **[Docs](docs/vpn-arr-automation-stack.md)** |
+| **Indexers**          | Prowlarr, FlareSolverr, Jackett      | **[Docs](docs/indexers.md)**                 |
+| **Notifications**     | Gotify, Webhooks                     | **[Docs](docs/gotify.md)**                   |
+| **Management**        | Portainer, Dozzle, WUD, Socket Proxy | **[Docs](docs/utilities.md)**                |
 
-| IP Address | Service | Stack | Port | Notes |
-| :--- | :--- | :--- | :--- | :--- |
-| `172.20.0.1` | **Gateway** | - | - | Docker Host Gateway |
-| `172.20.0.10` | **Jellyfin** | `jellyfin` | 8096 | Media Server |
-| `172.20.0.11` | **Gluetun** | `vpn-arr` | - | **VPN Gateway** |
-| `172.20.0.12` | **Jellyseerr** | `jellyfin` | 5055 | Request Manager |
-| `172.20.0.13` | **Radarr** | `vpn-arr` | 7878 | Movies |
-| `172.20.0.14` | **Sonarr** | `vpn-arr` | 8989 | TV Shows |
-| `172.20.0.15` | **Bazarr** | `vpn-arr-stack` | 6767 | Subtitles |
-| `172.20.0.16` | **Gotify** | `gotify` | 80 | Notifications |
-| `172.20.0.17` | **Portainer** | `utilities` | 9443 | Docker UI (via Proxy) |
-| `172.20.0.19` | **Profilarr** | `vpn-arr-stack` | 5000 | Quality Settings & Formats |
-| `172.20.0.20` | **Prowlarr** | `vpn-arr` | 9696 | Indexer Manager |
-| `172.20.0.21` | **FlareSolverr** | `vpn-arr-stack` | 8191 | Captcha Solver |
-| `172.20.0.22` | **Jackett** | `vpn-arr-stack` | 9117 | Indexer Fallback |
-| `172.20.0.23` | **Caddy** | `caddy` | 80/443 | **Reverse Proxy** |
-| `172.20.0.24` | **CrowdSec** | `crowdsec` | 8080 | Security Brain |
-| `172.20.0.25` | **Homepage** | `utilities` | 3000 | Dashboard |
-| `172.20.0.26` | **Dozzle** | `utilities` | 8080 | Log Viewer |
-| `172.20.0.27` | **WUD** | `utilities` | 3001 | Update Notifier |
-| `172.20.0.28` | **Socket Proxy** | `utilities` | 2375 | **Docker-Socket Proxy** |
-| `172.20.0.29` | **GoAccess** | `caddy` | 7890 | Access Logs Analysis |
-| `172.20.0.30` | **Maxmind** | `caddy` | - | **GeoIP Database** |
-| `172.20.0.31` | **Beszel** | `utilities` | 8090 | **Server Monitoring** |
-| `172.20.0.33` | **Kopia** | `kopia` | 51515 | Backup to Remote |
+### 🔒 Security & Connectivity
+
+| Service        | Role                             | Documentation                         |
+| :------------- | :------------------------------- | :------------------------------------ |
+| **Caddy**      | Reverse Proxy, SSL, Geo-Blocking | **[Docs](docs/caddy.md)**             |
+| **Authentik**  | Identity Provider (SSO), 2FA     | **[Docs](docs/authentik.md)**         |
+| **CrowdSec**   | IPS / Intrusion Detection System | **[Docs](docs/crowdsec.md)**          |
+| **Firewalld**  | Host Firewall Rules              | **[Docs](docs/security-firewall.md)** |
+| **Cloudflare** | DNS & API Management             | **[Docs](docs/cloudflare-setup.md)**  |
+
+### 📊 Monitoring & Maintenance
+
+| Topic               | Description                    | Link                                |
+| :------------------ | :----------------------------- | :---------------------------------- |
+| **GoAccess**        | Real-time Access Log Analytics | **[Docs](docs/goaccess.md)**        |
+| **Beszel**          | Lightweight Server Monitoring  | **[Docs](docs/beszel-setup.md)**    |
+| **Kopia**           | Offsite Backups                | **[Docs](docs/kopia-setup.md)**     |
+| **Troubleshooting** | Common errors and fixes        | **[Docs](docs/troubleshooting.md)** |
+
+---
+
+## 🛠️ Management Scripts
+
+Convenience scripts located in `/scripts` to manage the stack.
+
+- **Start/Restart All Stacks:**
+
+  ```bash
+  ./scripts/start-stacks.sh
+  ```
+
+  _Forces recreation of containers to ensure config changes are picked up._
+
+- **Update All Images:**
+
+  ```bash
+  ./scripts/pull-all.sh
+  ```
+
+- **Rebuild Caddy:**
+  ```bash
+  ./scripts/update-build-xcaddy.sh
+  ```
+  _Required when updating Caddy plugins (CrowdSec/MaxMind)._
+
+---
+
+## 📜 Static IP Allocation Map
+
+A quick reference for the `172.20.0.0/24` subnet.
+
+<details>
+<summary>Click to Expand</summary>
+
+| IP Address    | Service       | Stack       | Port   |
+| :------------ | :------------ | :---------- | :----- |
+| `172.20.0.1`  | **Gateway**   | -           | -      |
+| `172.20.0.10` | Jellyfin      | `jellyfin`  | 8096   |
+| `172.20.0.11` | Gluetun       | `vpn-arr`   | -      |
+| `172.20.0.12` | Jellyseerr    | `jellyfin`  | 5055   |
+| `172.20.0.13` | Radarr        | `vpn-arr`   | 7878   |
+| `172.20.0.14` | Sonarr        | `vpn-arr`   | 8989   |
+| `172.20.0.15` | Bazarr        | `vpn-arr`   | 6767   |
+| `172.20.0.16` | Gotify        | `gotify`    | 80     |
+| `172.20.0.17` | Portainer     | `utilities` | 9443   |
+| `172.20.0.19` | Profilarr     | `vpn-arr`   | 5000   |
+| `172.20.0.20` | Prowlarr      | `vpn-arr`   | 9696   |
+| `172.20.0.21` | FlareSolverr  | `vpn-arr`   | 8191   |
+| `172.20.0.23` | Caddy         | `caddy`     | 80/443 |
+| `172.20.0.24` | CrowdSec      | `crowdsec`  | 8080   |
+| `172.20.0.25` | Homepage      | `utilities` | 3000   |
+| `172.20.0.26` | Dozzle        | `utilities` | 8080   |
+| `172.20.0.27` | WUD           | `utilities` | 3001   |
+| `172.20.0.28` | Socket Proxy  | `utilities` | 2375   |
+| `172.20.0.29` | GoAccess      | `goaccess`  | 7890   |
+| `172.20.0.31` | Beszel        | `utilities` | 8090   |
+| `172.20.0.35` | Authentik Srv | `authentik` | 9000   |
+| `172.20.0.36` | Authentik Wrk | `authentik` | -      |
 
 </details>
 
 ---
-## Homepage
+
+## 📸 Gallery
+
+<details>
+<summary><b>Homepage Dashboard</b></summary>
 
 ![homepage dashboard](/assets/homepage-dashboard1.png)
------
 
-If I were to clone this repo to a brand-new machine right now and ran `start-stacks.sh`, **it would fail immediately.**
+</details>
 
-### **The "Invisible" Gaps (Why it would fail)**
+<details>
+<summary><b>Authentik Login</b></summary>
 
-This repo contains the *application* logic, but it is missing the **Host-Level Dependencies** that I configured manually in the terminal along the way.
+![authentik landing](/assets/authentik-landingpage.png)
 
-1.  **The Network Error:** Docker will complain that `dockerapps-net` does not exist. The `compose` files expect it to be `external`, so they won't create it for us.
-2.  **The "Connection Refused" Error:** Without the specific `/etc/docker/daemon.json` IPv6/DNS fix I applied, containers might fail to talk to each other.
-3.  **The "Missing File" Error:** Caddy will crash because `GeoLite2-Country.mmdb` is excluded from the repo (correctly), but it doesn't exist on the new host.
-4.  **The "Missing Secrets" Error:** The `.env` files are git-ignored. A fresh clone has no API keys, so containers will start with empty variables and crash.
-5.  **The Firewall:** `firewalld` won't be installed or configured, so even if Caddy starts, no one can reach it.
-6.  **Homepage-Crowdsec API Error:** `crowdsec` will generate a new Machine ID (because the database is fresh) and utilities/homepage/config/services.yaml will still contain the old username/password for the CrowdSec widget.
-
-To make this truly reproducible, I try to document the [**"One-Time Setup"**](/docs/from-zero.md) steps below that *must* happen before the scripts can run.
-
-*I would also need to refer to the rest of the [docs/](docs/) folder for granular details on specific services.*
-
------
-
-## 📚 Documentation Index
-
-This project is documented in modular "Deep Dives". Click the links below for detailed configurations and logic.
-
-### Deployment Guide - [One-Time Setup](/docs/from-zero.md)
-
-### Infrastructure & Storage
-
-* **[Storage Architecture](docs/storage.md):** How LVM is used to pool my currently humble 2 x 1TB NVMe drives in my mobo and manage volumes (`/mnt/pool01`).
-* **[Folder Structure & Hardlinks](docs/folder-structure.md):** The directory layout, **including a full "Golden Tree" map**, which enables atomic moves and automated anime routing.
-* **[Network Architecture](docs/networking.md):** The "Two-Zone" Docker network, Static IP map, and `daemon.json` configuration.
-
-### Services & Stacks
-
-* **[Media Core (Jellyfin & Jellyseerr)](docs/jellyfin-stack.md):** The streaming server and request management hub, with GPU Passthrough configurations.
-* **[Automation Engine (VPN & *Arr Stack)](docs/vpn-arr-automation-stack.md):** The "Engine Room." Covers Gluetun VPN, Radarr, Sonarr, Bazarr, Prowlarr and Download Clients.
-* **[Indexer Management](docs/indexers.md):** The "Hybrid" strategy using Prowlarr and Jackett with FlareSolverr to bypass CAPTCHAs.
-* **[Notification Hub](docs/gotify.md):** Centralized alerts for all services via Gotify and Webhooks.
-* **[Dashboard (Homepage)](docs/homepage.md):** The "Single Pane of Glass" monitoring all services, resources, and security alerts.
-
-### Security & Backups
-
-* **[Caddy Reverse Proxy](docs/caddy.md):** The "Front Door." Handles SSL, DDNS, and mobile app compatibility. Also includes the side cars of goaccess and maxmind.
-* **[CrowdSec IDS](docs/crowdsec.md):** The "Brain." Reads logs and bans malicious IPs before they touch the application.
-* **[Cloudflare Configuration](docs/cloudflare-setup.md):** Setup for API Tokens, DNS Records, and Permissions.
-* **[Firewalld](docs/security-firewall.md):** Firewalld "Software VLAN"
-* **[Utilities](docs/utilities.md):** Management stack & Socket Proxy
-* **[Beszel Setup](/docs/beszel-setup.md)**
-* **[Kopia Setup](/docs/kopia-setup.md)**
-
-## Scripts
-
-* [Update all containers/services](scripts/pull-all.sh)
-  
-  <details>
-      <summary>Show</summary>
-  
-  ![pull-all example](/assets/pull-all.png)
-
-  </details>
-
-</br>
-
-* [Compose up (with --force-recreate) all containers/services](scripts/start-stacks.sh)
-
-  <details>
-      <summary>Show</summary>
-
-  ![pull-all example](/assets/start-stacks.png)
-  
-  </details>
-
-</br>
-
-* [Rebuild-Update xcaddy](/scripts/update-build-xcaddy.sh)
+</details>

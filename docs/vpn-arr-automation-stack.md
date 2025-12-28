@@ -1,9 +1,9 @@
 # 🤖 Service: Automation Stack (`vpn-arr-stack`)
 
 **Location:** `/mnt/pool01/dockerapps/vpn-arr-stack/` \
-**Network:** `dockerapps-net` (Management) & `service:gluetun` (Downloads) \
+**Network:** `dockerapps-net` (Management) & `service:gluetun` (Downloads)
 
-This stack is the engine of the media server. It handles finding, downloading, renaming, and organizing content. It relies on a "Two-Zone" network architecture to ensure no piracy traffic leaks outside the VPN.
+This stack is the engine of the media server. It handles finding, downloading, renaming, and organizing content. It relies on a "Two-Zone" network architecture to ensure no traffic leaks outside the VPN.
 
 -----
 
@@ -130,6 +130,100 @@ docker compose up -d --force-recreate
 
 *(This will briefly interrupt downloads and the VPN connection).*
 
-## 5\. .env for vpn-arr-stack (saved alongside the compose file)
+## 5\. .env (saved alongside the compose file)
 
-The `.env` elements that are align with what we have in our stack can be found in ![.env-example](/vpn-arr-stack/.env.example)
+The `.env` elements that are align with what we have in our stack can be found in [.env-example](/vpn-arr-stack/.env.example)
+
+---
+
+</br>
+
+# 📂 Automation alongside a Folder Strucuture
+
+Section below explains the "Atomic Move" strategy and the complete lifecycle of a media request.
+
+## 1\. The "Atomic Move" Principle (Hardlinks)
+
+For hardlinks to work, the **Download Client** (qBittorrent/Transmission) and the **Media Manager** (Radarr/Sonarr) must perceive the file as existing on the **same file system**.
+
+We achieve this by mapping the **root** of the LVM volume (`/mnt/pool01/media`) to the **same internal path** (`/media`) in every single container.
+
+  * **Host Path:** `/mnt/pool01/media`
+  * **Container Path:** `/media`
+
+### **Why this matters (The "Magic")**
+
+By having one media volume that contains both our `/media/downloads` folder and our `/media/movies` folder, the system can use **Hardlinks**.
+
+  * This means our file can be "in" our seeding folder and our library folder at the **exact same time**.
+  * It uses **zero (0) extra disk space**.
+  * The move is **instant** (atomic), even for a 50GB file.
+
+-----
+
+## 2\. Workflow: The Lifecycle of a Request
+
+Here is the step-by-step journey of a file through our system:
+
+1.  **The Request:**
+    From **Jellyseerr**, a user selects a movie or show. Jellyseerr sends this request to **Radarr** (or Sonarr) to find it.
+
+2.  **The Hand-off:**
+    Radarr searches its indexers (via Prowlarr). When it finds a match, it sends the job to our **default download client** (e.g., qBittorrent).
+
+3.  **Tagging & Categorization:**
+
+      * **Standard:** Radarr assigns the category `radarr`.
+      * **Anime:** If the movie has the tag `anime` (auto-tagged by genre), Radarr assigns the category `radarr-anime` and uses the specific `qBittorrent (Anime)` client.
+
+4.  **The Download:**
+    qBittorrent downloads the file.
+
+      * It places chunks in `/media/downloads/incomplete` while active.
+      * It moves the final file to `/media/downloads/radarr` (or `radarr-anime`) when finished.
+
+5.  **The Check-up:**
+    Radarr knows it gave that job to qBittorrent. It periodically asks the qBittorrent API: *"How is that job with the category 'radarr' doing?"*
+
+6.  **The Report:**
+    qBittorrent's API eventually reports back: *"The job is 100% complete, and the files are located at `/media/downloads/radarr/My.Movie.2025.mkv`."*
+
+7.  **The Import (Hardlink):**
+    Radarr then knows exactly where the file is. Because of our **Remote Path Mapping**, it knows that `/media` on the download client is the same as `/media` on its own file system.
+
+      * It goes to that path.
+      * It performs a **Hardlink** to `/media/movies/My Movie (2025)/`.
+      * The file now exists in *both* places, but takes up space only *once*.
+
+-----
+
+## 3\. Directory Layout
+
+The structure is organized to separate "raw" downloads from "clean" library files while keeping them on the same partition.
+
+```text
+/mnt/pool01/media/
+├── downloads/               # Raw Ingest Zone
+│   ├── incomplete/          # Temporary folder for active downloads
+│   ├── radarr/              # Completed Movies (qBit Category: radarr)
+│   ├── sonarr/              # Completed TV Shows (qBit Category: sonarr)
+│   ├── radarr-anime/        # Completed Anime Movies (qBit Category: radarr-anime)
+│   └── sonarr-anime/        # Completed Anime TV (qBit Category: sonarr-anime)
+│
+├── movies/                  # Clean Movie Library (Hardlinks)
+├── shows/                   # Clean TV Library (Hardlinks)
+├── anime-movies/            # Clean Anime Movie Library
+└── anime-shows/             # Clean Anime TV Library
+```
+
+## 4\. Remote Path Mapping (Critical)
+
+**This setting must be configured in BOTH Radarr AND Sonarr (under Settings \> Download Clients).**
+
+Because the Download Clients live inside the `gluetun` VPN container (IP `172.20.0.11`) and the \*Arr apps live on the app network (IP `172.20.0.13+`), the \*Arr apps view the downloader as a "Remote" host.
+
+To prevent them from trying to download files over the network (which is slow and breaks hardlinks), we explicitly tell them the paths are local.
+
+  * **Host:** `172.20.0.1` (Gateway IP used to talk to clients)
+  * **Remote Path:** `/media`
+  * **Local Path:** `/media`

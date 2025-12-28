@@ -14,9 +14,9 @@ The container is configured to persist its database locally (for backups) and re
 
 ## 2\. Acquisition Configuration (`acquis.yaml`)
 
-This file tells CrowdSec specifically which files to tail and how to interpret them. Without this, CrowdSec runs blind.
+These files tell CrowdSec specifically which files to tail and how to interpret them. Without this, CrowdSec runs blind.
 
-**File:** `acquis.yaml`
+**File:** `crowdsec/acquis.yaml`
 
 ```yaml
 # Watch the Caddy JSON access log
@@ -25,6 +25,18 @@ filenames:
 # Tell CrowdSec to use the Caddy parser for these lines
 labels:
   type: caddy
+```
+
+Create new
+**File:** `crowdsec/config/acquis.d/authentik.yaml`
+
+```yaml
+# Watch the Authentik's instance via the Docker container
+source: docker
+container_name:
+  - authentik-server
+labels:
+  type: authentik
 ```
 
 ## 3\. Integration Workflow (Connecting to Caddy)
@@ -53,7 +65,7 @@ See if CrowdSec is successfully reading logs and parsing them.
 docker exec crowdsec cscli metrics
 ```
 
-  * *Look for:* `Acquisition Metrics` (Lines read) and `Parser Metrics` (Parseds); `Local API Alerts` and `Local API Bouncers Metrics`
+- _Look for:_ `Acquisition Metrics` (Lines read) and `Parser Metrics` (Parseds); `Local API Alerts` and `Local API Bouncers Metrics`
 
 **Check Community's Decision's Blocklist Count:**
 See if CrowdSec is successfully getting pool of blocklists from upstream.
@@ -62,7 +74,7 @@ See if CrowdSec is successfully getting pool of blocklists from upstream.
 docker exec crowdsec cscli decisions list --origin CAPI | wc -l
 ```
 
-  * *Output should in 10K-20K - this confirms server is successfully downloading the "Community Blocklist" (CAPI). If this connection were broken, this number would be 0.*
+- _Output should in 10K-20K - this confirms server is successfully downloading the "Community Blocklist" (CAPI). If this connection were broken, this number would be 0._
 
 **List Active Bans:**
 See who is currently blocked.
@@ -93,7 +105,9 @@ docker exec crowdsec cscli hub upgrade
 ```
 
 **Check CAPI Status:**
+
 ```bash
 docker exec crowdsec cscli capi status
 ```
- * Output shuld be like so: ![](/assets/cscli-capi-status.png)
+
+- Output shuld be like so: ![](/assets/cscli-capi-status.png)
