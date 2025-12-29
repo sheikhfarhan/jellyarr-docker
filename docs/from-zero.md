@@ -13,74 +13,73 @@
 
 2.  **Configure Docker Daemon (for IPv6 & DNS):**
 
-      * **Why:** Enables IPv6 support. I use the subnet `2001:db8:abc1::/64` here for the **Default Bridge** (system-wide), which must be different from our custom network later.
-      * **Action:** Create `/etc/docker/daemon.json`:
+* **Why:** Enables IPv6 support. I use the subnet `2001:db8:abc1::/64` here for the **Default Bridge** (system-wide), which must be different from our custom network later.
+* **Action:** Create `/etc/docker/daemon.json`:
 
-         ```json
-         {
-           "ipv6": true,
-           "fixed-cidr-v6": "2001:db8:abc1::/64",
-           "experimental": true,
-           "ip6tables": true,
-           "dns": ["1.1.1.1", "8.8.8.8"]
-         }
-         ```
-      * **Apply:** `sudo systemctl restart docker`
+    ```json
+    {
+    "ipv6": true,
+    "fixed-cidr-v6": "2001:db8:abc1::/64",
+    "experimental": true,
+    "ip6tables": true,
+    "dns": ["1.1.1.1", "8.8.8.8"]
+    }
+    ```
+* **Apply:** `sudo systemctl restart docker`
 
 3.  **Create the Network Infrastructure:**
 
-      * Creates the `dockerapps-net` custom network with its own isolated IPv6 subnet (`abc2`).
+* Creates the `dockerapps-net` custom network with its own isolated IPv6 subnet (`abc2`).
 
-         ```bash
-         docker network create \
-           --driver=bridge \
-           --ipv6 \
-           --subnet=172.20.0.0/24 \
-           --gateway=172.20.0.1 \
-           --subnet=2001:db8:abc2::/64 \
-           --gateway=2001:db8:abc2::1 \
-           dockerapps-net
-         ```
+    ```bash
+    docker network create \
+    --driver=bridge \
+    --ipv6 \
+    --subnet=172.20.0.0/24 \
+    --gateway=172.20.0.1 \
+    --subnet=2001:db8:abc2::/64 \
+    --gateway=2001:db8:abc2::1 \
+    dockerapps-net
+    ```
 
 4.  **Configure Firewall (Security & Access):**
 
-      * **Allow:** Web (80/443) and Local Direct Play (8096).
-      * **Block:** Prevents Docker containers (`172.20...`) from initiating connections to our Home LAN (`192.168...`), effectively creating a "Software VLAN."
+* **Allow:** Web (80/443) and Local Direct Play (8096).
+* **Block:** Prevents Docker containers (`172.20...`) from initiating connections to our Home LAN (`192.168...`), effectively creating a "Software VLAN."
 
-         ```bash
-         # 1. Open Required Ports
-         sudo firewall-cmd --add-service=http --permanent
-         sudo firewall-cmd --add-service=https --permanent
-         sudo firewall-cmd --add-port=8096/tcp --permanent
+    ```bash
+    # 1. Open Required Ports
+    sudo firewall-cmd --add-service=http --permanent
+    sudo firewall-cmd --add-service=https --permanent
+    sudo firewall-cmd --add-port=8096/tcp --permanent
 
-         # 2. Create DOCKER-USER Chain (Prevents errors if Docker hasn't started yet)
-         sudo firewall-cmd --permanent --direct --add-chain ipv4 filter DOCKER-USER
+    # 2. Create DOCKER-USER Chain (Prevents errors if Docker hasn't started yet)
+    sudo firewall-cmd --permanent --direct --add-chain ipv4 filter DOCKER-USER
 
-         # 3. Add Isolation Rule (Block Docker -> LAN)
-         sudo firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -s 172.20.0.0/24 -d 192.168.0.0/24 -m conntrack --ctstate NEW -j DROP
+    # 3. Add Isolation Rule (Block Docker -> LAN)
+    sudo firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -s 172.20.0.0/24 -d 192.168.0.0/24 -m conntrack --ctstate NEW -j DROP
 
-         # 4. Apply
-         sudo firewall-cmd --reload
-         ```
+    # 4. Apply
+    sudo firewall-cmd --reload
+    ```
 
 5.  **Identify Host IDs (For .env):**
 
-      * Homepage and \*Arr apps need to know our user/group IDs.
+* Homepage and \*Arr apps need to know our user/group IDs.
 
-         ```bash
-         echo "PUID=$(id -u)"
-         echo "PGID=$(id -g)"
-         echo "DOCKER_GID=$(getent group docker | cut -d: -f3)"
-         ```
+    ```bash
+    echo "PUID=$(id -u)"
+    echo "PGID=$(id -g)"
+    echo "DOCKER_GID=$(getent group docker | cut -d: -f3)"
+    ```
     *(Save these numbers for our `.env` file in Phase 2).*
 
 6.  **Cloudflare Preparation (DNS & API):**
 
-    * **Why:** Caddy requires an API token to solve DNS challenges (for automatic SSL certificates) and to verify domain ownership. You also need to point your subdomains to this server’s IP address so Caddy can receive the traffic.
-    * **Action 1 (Generate API Token & and Establish Zone DNS Edit and Read):**
-    * **Action 2 (Create DNS Records):**
-        * Create an **A Record** (IPv4) for *every* subdomain we would define in our Caddyfile (e.g., `jellyfin`, `requests`, `gotify`, `auth`).
-    
+* **Why:** Caddy requires an API token to solve DNS challenges (for automatic SSL certificates) and to verify domain ownership. You also need to point your subdomains to this server’s IP address so Caddy can receive the traffic.
+* **Action 1 (Generate API Token & and Establish Zone DNS Edit and Read):**
+* **Action 2 (Create DNS Records):**
+    * Create an **A Record** (IPv4) for *every* subdomain we would define in our Caddyfile (e.g., `jellyfin`, `requests`, `gotify`, `auth`).
     * Refer to [cloudflare-setup](/docs/cloudflare-setup.md) documentation for details
 
 ### **Why these matter:**
@@ -106,19 +105,13 @@
 
 3.  **Restore "Ignored" Assets:**
 
-      * **GeoIP Database:** Required for Caddy.
-
-        ```bash
-        cd caddy #make sure we are in caddy dir
-        wget "https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-Country.mmdb"
-        sudo chown 1000:1000 GeoLite2-Country.mmdb
-        cd ..
-        ```
+* **Authentik:** Any images, icons and background files in the `media` folder
+* **Crowdsec:** The authentik.yaml file within the `acquis.d` folder
+* **Homepage:** Any missing/custom icons png in the `icons` folder
 
 4.  **Create .env files (`.env`):**
 
-      * **Critical:** We must create the `.env` file in **every** service folder that requires one. Refer to .env.example in each of the subfolder for each services/containers.
-      
+* **Critical:** We must create the `.env` file in **every** service folder that requires one. Refer to .env.example in each of the subfolder for each services/containers.
       
 -----
 

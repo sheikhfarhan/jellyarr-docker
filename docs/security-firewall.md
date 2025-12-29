@@ -3,7 +3,7 @@
 **Role:** Prevent Lateral Movement \
 **Mechanism:** Firewalld Direct Rules (iptables `DOCKER-USER` chain)
 
-Since we have a few services exposed to the internet, especially so Jellyfin through a web server (caddy), the idea is to prevent a compromised container from accessing the local home network ("Lateral Movement") and we use a **Software VLAN** strategy. This is necessary because Docker's default networking bypasses standard Firewalld zones.
+Since we have a few services exposed to the internet, especially so Jellyfin, Jellyseerr and Gotify through a web server (caddy), the idea is to prevent a compromised container from accessing the local home network ("Lateral Movement") and we use a **Software VLAN** strategy. This is necessary because Docker's default networking bypasses standard Firewalld zones.
 
 ## 1\. The Strategy
 

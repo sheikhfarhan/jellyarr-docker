@@ -41,8 +41,8 @@ Thumbs.db
 /lost+found
 
 # --- Exceptions (Allow specific safe configs) ---
-!homepage/config/
-!homepage/icons/
+!utilities/homepage/config/
+!utilities/homepage/config/icons/
 !crowdsec/config/acquis.d/
 
 # Only ignore the real secret file

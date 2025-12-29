@@ -27,6 +27,32 @@ These services are **inside the VPN bubble**. They do not have their own IP addr
       * `sysctls: net.ipv6.conf.all.disable_ipv6=0` (Enables IPv6 inside the tunnel).
       * **Healthcheck:** The container has a built-in healthcheck. Dependent services (`depends_on`) will NOT start until the VPN tunnel is fully established.
 
+#### **🔧 Advanced: Control Server (API Access)**
+Enabled to allow the **Homepage** dashboard to query the VPN status (Real Public IP & Port Forwarding status) via a secure API. More info [here on Glutun's Wiki](https://github.com/qdm12/gluetun-wiki/blob/main/setup/advanced/control-server.md)
+
+1.  **Generate API Key:**
+    Run this temporary command to generate a random, secure key:
+    ```bash
+    docker run --rm qmcgaw/gluetun genkey
+    ```
+2.  **Configuration File:**
+    Created `auth/config.toml` in the local gluetun directory. This defines a "homepage" role with read-only access to specific endpoints.
+    * **File:** `/dockerapps/gluetun/auth/config.toml`
+    * **Content:**
+        ```toml
+        [[roles]]
+        name = "homepage"
+        auth = "apikey"
+        apikey = "YOUR_GENERATED_KEY_HERE"
+        routes = [
+            "GET /v1/publicip/ip",
+            "GET /v1/portforward"
+        ]
+        ```
+3.  **Docker Mount:**
+    Ensured the auth folder is mounted in `compose.yml`:
+    `- ./gluetun/auth:/gluetun/auth:ro`
+
 ### **B. qBittorrent (Primary Downloader)**
 
   * **Role:** Torrent client.

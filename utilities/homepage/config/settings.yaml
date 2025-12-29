@@ -1,0 +1,25 @@
+title: My Media Server
+background: 
+  image: https://images.pexels.com/photos/1624496/pexels-photo-1624496.jpeg
+  opacity: 30 # 0-100background:
+  #image: https://images.unsplash.com/photo-1506318137071-a8bcbf50dd55?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80
+  brightness: 50
+  #blur: 50
+theme: dark
+color: slate
+layout:
+  Media:
+    style: row
+    columns: 4
+  Automation:
+    style: row
+    columns: 4
+  Management:
+    style: row
+    columns: 4
+
+useEqualHeights: true
+statusStyle: "dot"
+disableCollapse: true
+headerStyle: boxedWidgets
+
