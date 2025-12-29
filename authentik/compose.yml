@@ -21,6 +21,9 @@ services:
       interval: 30s
       retries: 5
       timeout: 5s
+    labels:
+      # Tell WUD to ONLY notify if there is a newer '16-alpine' tag (security patches)
+      - "wud.tag.include=^16-alpine$$"
     volumes:
       - ./database:/var/lib/postgresql/data
     environment:
@@ -48,6 +51,9 @@ services:
       - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
       # SOCKET PROXY CONNECTION
       - DOCKER_HOST=tcp://socket-proxy:2375
+    labels:
+      # Tell WUD to ignore anything with 'rc' or 'beta' in the name
+      - "wud.tag.exclude=.*(?i)(rc|beta|alpha).*"
     volumes:
       - ./media:/media
       - ./templates:/templates
@@ -78,6 +84,9 @@ services:
       # SOCKET PROXY CONNECTION
       - DOCKER_HOST=tcp://socket-proxy:2375
     user: root
+    labels:
+      # Tell WUD to ignore anything with 'rc' or 'beta' in the name
+      - "wud.tag.exclude=.*(?i)(rc|beta|alpha).*"
     volumes:
       - ./media:/media
       - ./certs:/certs
