@@ -59,7 +59,7 @@ services:
       # --- Port Forwarding (Referencing .env)
       - FIREWALL_VPN_INPUT_PORTS=${AIRVPN_PORT_QBIT},${AIRVPN_PORT_TRANS}
       # This gives gluetun a public DNS to use BEFORE the tunnel is up
-      - DNS_ADDRESS=1.1.1.1
+      #- DNS_ADDRESS=1.1.1.1
       # Adding these below to prevent warning in logs and reduce ram usage
       - BLOCK_MALICIOUS=off
       - BLOCK_SURVEILLANCE=off
@@ -67,7 +67,7 @@ services:
       #- LOG_LEVEL=debug
       # --- CONTROL SERVER SECURITY ---
       - HTTP_CONTROL_SERVER_LOG=${HTTP_CONTROL_SERVER_LOG}
-      #- HTTP_CONTROL_SERVER_AUTH_DEFAULT_ROLE=${GLUETUN_AUTH_JSON} # pivot to using config.toml
+      #- HTTP_CONTROL_SERVER_AUTH_DEFAULT_ROLE=${GLUETUN_AUTH_JSON} # commeting this out since pivot to using config.toml
     restart: unless-stopped
   ##################################################
   # 2. QBITTORRENT (Client 1)

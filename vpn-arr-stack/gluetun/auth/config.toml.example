@@ -4,5 +4,5 @@ auth = "apikey"
 apikey = "generate_your_own_key"
 routes = [
     "GET /v1/publicip/ip", 
-    "GET /v1/openvpn/portforwarded"
+    "GET /v1/portforward"
 ]
