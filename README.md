@@ -82,7 +82,7 @@ Click the links below for deep-dives into specific components of the stack.
 | Service        | Role                             | Documentation                         |
 | :------------- | :------------------------------- | :------------------------------------ |
 | **Caddy**      | Reverse Proxy, SSL, Geo-Blocking | **[Docs](docs/caddy.md)**             |
-| **Authentik**  | Identity Provider (SSO), 2FA     | **[Docs](docs/authentik.md)**         |
+| **VoidAuth**   | Identity Provider (SSO), 2FA     | **[Docs](docs/sso-authentication.md)**|
 | **CrowdSec**   | IPS / Intrusion Detection System | **[Docs](docs/crowdsec.md)**          |
 | **Firewalld**  | Host Firewall Rules              | **[Docs](docs/security-firewall.md)** |
 | **Cloudflare** | DNS & API Management             | **[Docs](docs/cloudflare-setup.md)**  |
@@ -116,12 +116,6 @@ Convenience scripts located in `/scripts` to manage the stack.
   ./scripts/pull-all.sh
   ```
 
-- **Rebuild Caddy:**
-  ```bash
-  ./scripts/update-build-xcaddy.sh
-  ```
-  _Required when updating Caddy plugins (CrowdSec/MaxMind)._
-
 ---
 
 ## 📜 Static IP Allocation Map
@@ -141,7 +135,7 @@ A quick reference for the `172.20.0.0/24` subnet.
 | `172.20.0.14` | Sonarr        | `vpn-arr`   | 8989   |
 | `172.20.0.15` | Bazarr        | `vpn-arr`   | 6767   |
 | `172.20.0.16` | Gotify        | `gotify`    | 80     |
-| `172.20.0.17` | Portainer     | `utilities` | 9443   |
+| `172.20.0.17` | Arcane        | `utilities` | 3552   |
 | `172.20.0.19` | Profilarr     | `vpn-arr`   | 5000   |
 | `172.20.0.20` | Prowlarr      | `vpn-arr`   | 9696   |
 | `172.20.0.21` | FlareSolverr  | `vpn-arr`   | 8191   |
