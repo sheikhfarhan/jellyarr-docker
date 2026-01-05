@@ -7,8 +7,7 @@ services:
 # 1. CADDY (Reverse Proxy)
 # ------------------------------------------------
   caddy:
-    build: .
-    image: caddy-cloudflare-plugin
+    image: serfriz/caddy-cloudflare-ddns-crowdsec-geoip:latest
     container_name: caddy
     hostname: caddy
     networks:
@@ -39,8 +38,9 @@ services:
       # Since we no longer serving goaccess via a sub-domain through caddy anymore, commenting this out
       # - ./goaccess/html:/srv/goaccess-report
       # WUD cannot check it on Docker Hub (prevents 401 errors).
-    labels:
-      - "wud.watch=false"
+    #labels:
+    #  - "wud.watch=false"
+    #  - "com.getarcaneapp.arcane.updater=false"
     restart: unless-stopped
 
 # ------------------------------------------------
@@ -63,3 +63,30 @@ services:
       # Maps local 'maxmind' folder to the container's data folder
       - ./maxmind:/usr/share/GeoIP
     restart: unless-stopped
+
+# ------------------------------------------------
+# 3. VOIDAUTH
+# ------------------------------------------------
+  voidauth: 
+    image: voidauth/voidauth:latest
+    container_name: voidauth
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.37
+        ipv6_address: 2001:db8:abc2::37
+    user: "${PUID}:${PGID}"
+    volumes:
+      - ./voidauth/config:/app/config
+      - ./voidauth/db:/app/db
+    ports:
+      - "3002:3000"
+    environment:
+      - APP_URL=https://auth1.${ROOT_DOMAIN}
+      - PASSWORD_STRENGTH=${PASS_STRENGTH}
+      - APP_TITLE=${APP_TITLE}
+      - STORAGE_KEY=${VOIDAUTH_STORAGE_KEY}
+      - DB_ADAPTER=sqlite
+    restart: unless-stopped
+    depends_on:
+      - caddy
+

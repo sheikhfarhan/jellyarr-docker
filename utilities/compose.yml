@@ -9,7 +9,7 @@ services:
   # This container is the ONLY one that touches the real socket.
   # All other apps talk to this proxy via TCP.
   socket-proxy:
-    image: linuxserver/socket-proxy:latest
+    image: lscr.io/linuxserver/socket-proxy:latest
     container_name: socket-proxy
     networks:
       dockerapps-net:
@@ -21,21 +21,24 @@ services:
       - IMAGES=1
       - INFO=1
       - NETWORKS=1
+      - EXEC=1
       - VOLUMES=1
       - SERVICES=1    # (Optional, good for stack viewing)
       - TASKS=1       # (Optional)
       - EVENTS=1      # Critical for real-time updates
-       # WRITE ACCESS (Blocked by Default - "Read Only" Mode)
-      # This prevents Homepage/Portainer from creating/deleting containers.
-      # If we need to manage containers via Portainer, change POST to 1.
-      - POST=0
+      - PING=1
+      - VERSION=1
+      # WRITE ACCESS (Blocked by Default - "Read Only" Mode)
+      # This prevents Homepage/Portainer/Arcane from creating/deleting containers.
+      # If we need to manage containers via Portainer/Arcane, change POST to 1.
+      - POST=1
+      - DELETE=1
       - AUTH=0
       - SECRETS=0
       - LOG_LEVEL=warning
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
-
 
   ##################################################
   # 2. HOMEPAGE (Dashboard)
@@ -106,6 +109,9 @@ services:
       dockerapps-net:
         ipv4_address: 172.20.0.27
         ipv6_address: 2001:db8:abc2::27
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     ports:
       - 3001:3000
     environment:
@@ -118,6 +124,8 @@ services:
       # --- REGISTRIES ---
       - WUD_REGISTRY_LSCR_LSCR_USERNAME=${GITHUB_USER}
       - WUD_REGISTRY_LSCR_LSCR_TOKEN=${GITHUB_TOKEN}
+      - WUD_REGISTRY_HUB_PUBLIC_LOGIN=${DOCKERHUB_USER}
+      - WUD_REGISTRY_HUB_PUBLIC_PASSWORD=${DOCKERHUB_TOKEN}
       #- WUD_REGISTRY_GHCR_GHCR_USERNAME=${GITHUB_USER}
       #- WUD_REGISTRY_GHCR_GHCR_TOKEN=${GITHUB_TOKEN}
       - WUD_TRIGGER_GOTIFY_LOCAL_URL=http://gotify:80
@@ -130,30 +138,7 @@ services:
       - socket-proxy
 
   ##################################################
-  # 5. PORTAINER (Management UI)
-  ##################################################
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    hostname: portainer
-    networks:
-      dockerapps-net:
-        ipv4_address: 172.20.0.17
-        ipv6_address: 2001:db8:abc2::17
-    ports:
-      - 9443:9443
-    environment:
-      - PUID=${PUID} 
-      - PGID=${PGID} 
-      - TZ=${TZ}   
-    volumes:
-      - ./portainer/data:/data
-      # NO SOCKET MOUNT HERE!
-      # We will configure it to use the proxy via the UI.
-    restart: unless-stopped
-
-  ##################################################
-  # 6. BESZEL HUB (Monitoring Server)
+  # 5. BESZEL HUB (Monitoring Server)
   ##################################################
   beszel-hub:
     image: henrygd/beszel:latest
@@ -178,8 +163,8 @@ services:
       start_period: 20s
     restart: unless-stopped
 
-##################################################
-  # 7. BESZEL AGENT (Metrics Collector)
+  ##################################################
+  # 6. BESZEL AGENT (Metrics Collector)
   ##################################################
   beszel-agent:
     image: henrygd/beszel-agent:latest
@@ -210,12 +195,44 @@ services:
       # Library (LVM: dm-3) - - to change accordingly for new system
       - /mnt/pool01/library/.beszel:/extra-filesystems/dm-3__Library:ro
       # VM Lab (Crucial SSD)
-      - /mnt/vm_lab:/extra-filesystems/sda5__VM-Lab-SSD:ro
+      #- /mnt/vm_lab:/extra-filesystems/sda5__VM-Lab-SSD:ro
       # Optional - listing systemd services
       - /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:ro
-
+    tmpfs:
+      - /var/lib/beszel-agent
     restart: unless-stopped
     depends_on:
       - socket-proxy
       - beszel-hub
 
+  ##################################################
+  # 7. ARCANE
+  ##################################################
+  arcane:
+    image: ghcr.io/getarcaneapp/arcane:latest
+    container_name: arcane
+    hostname: arcane
+    networks:
+      dockerapps-net:
+        ipv4_address: 172.20.0.17
+        ipv6_address: 2001:db8:abc2::17
+    ports:
+      - 3552:3552
+    volumes:
+      - ./arcane/arcane-data:/app/data
+    environment:
+      - APP_URL=http://localhost:3552
+      - DOCKER_HOST=tcp://socket-proxy:2375
+      - PUID=${PUID}
+      - PGID=958
+      - ENCRYPTION_KEY=${ARCANE_KEY}
+      - JWT_SECRET=${ARCANE_JWT_SECRET}
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://localhost:3552/api/health >/dev/null || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy

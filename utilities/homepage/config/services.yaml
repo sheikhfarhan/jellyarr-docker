@@ -63,12 +63,12 @@
 
     - Profilarr:
         icon: profilarr.png
-        href: http://172.20.0.19:7777
+        href: http://172.20.0.19:6868
         description: Quality & Custom Format Sync
         container: profilarr
         #widget:
         #  type: profilarr
-        #  url: http://172.20.0.19:7777
+        #  url: http://172.20.0.19:6868
 
     - Gluetun:
         icon: gluetun.png
@@ -103,12 +103,6 @@
           password: {{HOMEPAGE_VAR_QBIT_PASS}}
 
 - Management:
-    - Portainer:
-        icon: portainer.png
-        href: https://172.20.0.17:9443
-        description: Docker UI
-        container: portainer
-
     - Gotify:
         icon: gotify.png
         href: http://172.20.0.16:80
@@ -181,13 +175,19 @@
           snapshotHost: mediaserver
           snapshotPath: /source/dockerapps
 
-    - Authentik:
-        icon: authentik.png
-        href: https://auth.{{HOMEPAGE_VAR_ROOT_DOMAIN}}
+    #- Authentik:
+    #    icon: authentik.png
+    #    href: https://auth.{{HOMEPAGE_VAR_ROOT_DOMAIN}}
+    #    description: Authentication
+    #    container: authentik-server
+    #    widget: 
+    #      type: authentik
+    #      url: http://authentik-server:9000
+    #      key: {{HOMEPAGE_VAR_AUTHENTIK_API_TOKEN}}
+    #      version: 2
+
+    - VoidAuth:
+        icon: /icons/voidauth.png
+        href: https://auth1.{{HOMEPAGE_VAR_ROOT_DOMAIN}}
         description: Authentication
-        container: authentik-server
-        widget: 
-          type: authentik
-          url: http://authentik-server:9000
-          key: {{HOMEPAGE_VAR_AUTHENTIK_API_TOKEN}}
-          version: 2
+        container: voidauth

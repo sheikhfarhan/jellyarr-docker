@@ -5,7 +5,7 @@
     dynamic_dns {
         provider cloudflare {env.CLOUDFLARE_API_TOKEN}
         domains {
-            {$ROOT_DOMAIN} jellyfin requests gotify auth
+            {$ROOT_DOMAIN} jellyfin requests gotify auth1
         }
         # Forcing cloudlfare ddns to not create ipv6 entries in dns records for the subdomains, as it breaks some of our services.
         versions ipv4
@@ -66,11 +66,36 @@
     }
 }
 
+# --- NEW SNIPPET: Allows SG + UAE ---
+(security_extended) {
+    # Block anyone NOT from Singapore OR UAE
+    @geoblock_extended {
+        not maxmind_geolocation {
+            db_path "/etc/caddy/maxmind/GeoLite2-Country.mmdb"
+            allow_countries SG AE
+        }
+    }
+    respond @geoblock_extended "Access Denied: Geo-Block Active" 403
+
+    # Still keep CrowdSec protection
+    route {
+        crowdsec
+    }
+}
+
 # 3. AUTHENTIK (The Doorman)
-(authentik) {
-    forward_auth http://authentik-server:9000 {
-        uri /outpost.goauthentik.io/auth/caddy
-        copy_headers X-Authentik-Username X-Authentik-Groups X-Authentik-Email X-Authentik-Name X-Authentik-Uid X-Authentik-Jwt X-Authentik-Meta-Jwks X-Authentik-Meta-Outpost X-Authentik-Meta-Provider X-Authentik-Meta-App X-Authentik-Meta-Version
+#(authentik) {
+#    forward_auth http://authentik-server:9000 {
+#        uri /outpost.goauthentik.io/auth/caddy
+#        copy_headers X-Authentik-Username X-Authentik-Groups X-Authentik-Email X-Authentik-Name X-Authentik-Uid X-Authentik-Jwt X-Authentik-Meta-Jwks X-Authentik-Meta-Outpost X-Authentik-Meta-Provider X-Authentik-Meta-App X-Authentik-Meta-Version
+#    }
+#}
+
+# 4. VOIDAUTH (The Doorman)
+(voidauth) {
+    forward_auth voidauth:3000 {
+        uri /api/authz/forward-auth
+        copy_headers Remote-User Remote-Groups Remote-Name Remote-Email
     }
 }
 
@@ -85,7 +110,7 @@ jellyfin.{$ROOT_DOMAIN} {
         resolvers 1.1.1.1
     }
     import logging
-    import security
+    import security_extended
 
     reverse_proxy http://jellyfin:8096 {
         header_up X-Real-IP {remote_host}
@@ -99,10 +124,10 @@ requests.{$ROOT_DOMAIN} {
         resolvers 1.1.1.1
     }
     import logging
-    import security
+    import security_extended
     
-    # Authentik
-    import authentik
+    # VoidAuth
+    import voidauth
 
     reverse_proxy http://jellyseerr:5055 {
         header_up X-Real-IP {remote_host}
@@ -131,9 +156,9 @@ gotify.{$ROOT_DOMAIN} {
         }
     }
 
-    # 3. IF it is NOT an API call (The Web UI) -> Authentik -> Proxy
+    # 3. IF it is NOT an API call (The Web UI) -> VoidAuth -> Proxy
     handle {
-        import authentik
+        import voidauth
         reverse_proxy http://gotify:80 {
             header_up X-Real-IP {remote_host}
         }
@@ -141,13 +166,25 @@ gotify.{$ROOT_DOMAIN} {
 }
 
 # 4. AUTHENTIK (Identity Provider)
-auth.{$ROOT_DOMAIN} {
+#auth.{$ROOT_DOMAIN} {
+#    tls {
+#        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+#        resolvers 1.1.1.1
+#    }
+#    # Replace the manual geoblock lines with crowdsec's route, since we have included authentik.yaml into crowdsec's acquisition
+#    import security_extended
+#
+#    reverse_proxy http://authentik-server:9000
+#}
+
+# 5. VOIDAUTH (Identity Provider)
+auth1.{$ROOT_DOMAIN} {
     tls {
         dns cloudflare {env.CLOUDFLARE_API_TOKEN}
         resolvers 1.1.1.1
     }
-    # Replace the manual geoblock lines with crowdsec's route, since we have included authentik.yaml into crowdsec's acquisition
-    import security
 
-    reverse_proxy http://authentik-server:9000
+    import security_extended
+
+    reverse_proxy voidauth:3000
 }
