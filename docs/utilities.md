@@ -8,7 +8,7 @@ This stack consolidates all management tools behind a **Socket Proxy**, ensuring
 ## 1\. Architecture
 
   * **Socket Proxy:** The *only* container with `/var/run/docker.sock` mounted. It exposes a sanitized Docker API on TCP port `2375`.
-  * **Dependent Services:** Homepage, Portainer, WUD, and Dozzle connect to `tcp://172.20.0.28:2375`.
+  * **Dependent Services:** Homepage, Arcane, WUD, Beszel and Dozzle connect to `tcp://172.20.0.28:2375`.
 
 ## 2\. Services Configuration
 
@@ -16,9 +16,6 @@ This stack consolidates all management tools behind a **Socket Proxy**, ensuring
 
   * **IP:** `172.20.0.28`
   * **Port:** `2375` (Internal TCP)
-  * **Security:**
-      * `POST=0`: Blocks all state-changing commands (create/start/stop/delete).
-      * `CONTAINERS=1`, `IMAGES=1`, `NETWORKS=1`: Allows read-only monitoring.
 
 ### **B. Homepage (Dashboard)**
 
@@ -32,13 +29,13 @@ This stack consolidates all management tools behind a **Socket Proxy**, ensuring
   * **IP:** `172.20.0.27`
   * **Port:** `3001`
   * **Watcher:** Custom `PROXY` watcher pointing to `172.20.0.28`.
-  * **Registries:** GitHub/LSCR authenticated via `${GITHUB_TOKEN}` in `.env`.
+  * **Registries:** Authenticated via example: `${GITHUB_TOKEN}` in `.env`.
 
-### **D. Portainer (Management)**
+### **D. Arcane (Management)**
 
   * **IP:** `172.20.0.17`
-  * **Port:** `9443`
-  * **Connection:** Must be manually connected in UI to `tcp://172.20.0.28:2375`.
+  * **Port:** `3552`
+  * **Connection:** `DOCKER_HOST=tcp://172.20.0.28:2375`
 
 ### **E. Dozzle (Log Viewer)**
 
@@ -46,7 +43,7 @@ This stack consolidates all management tools behind a **Socket Proxy**, ensuring
   * **Port:** `9090` (Mapped to host 8080)
   * **Connection:** `DOCKER_HOST=tcp://172.20.0.28:2375`
 
-  ### **F. Beszel Hub + Agent (Monitoring Hub)**
+### **F. Beszel Hub + Agent (Monitoring Hub)**
 
   * **IP:** For Hub: `172.20.0.31`
   * **Port:** For Hub: `8090` (Mapped to host 8090)
@@ -68,7 +65,6 @@ docker compose up -d --force-recreate
 
 **Troubleshooting:**
 
-  * **"Connection Refused" on Portainer:** Ensure `socket-proxy` is running and `POST=0` is set (Read-Only).
   * **WUD "ENOENT" Error:** Ensure `WUD_WATCHER_LOCAL_SOCKET` is removed and `WUD_WATCHER_PROXY_HOST` is set.
 
 ## **Special Case: Homepage x CrowdSec**

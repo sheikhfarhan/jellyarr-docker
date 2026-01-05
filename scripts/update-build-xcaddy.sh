@@ -13,3 +13,5 @@ docker compose up -d caddy
 docker image prune -f
 
 echo "✅ Caddy rebuilt with latest plugins!"
+
+# no longer needed since using custom github's caddy custom build

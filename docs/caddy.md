@@ -1,6 +1,6 @@
 # Service: Caddy (Reverse Proxy)
 
-**Version:** 3.1 (Snippets & Authentik Integration)
+**Version:** 4.1 (Snippets & VoidAuth Integration)
 
 ## 1. Architecture Overview
 
@@ -9,7 +9,7 @@
 | **Caddy**     | **Reverse Proxy**         | The "Front Door". Handles SSL, Geo-Blocking (Layer 1), and Traffic Routing.         |
 | **CrowdSec**  | **Intrusion Detection**   | The "Brain". Reads logs, detects attacks, and instructs Caddy to ban IPs (Layer 2). |
 | **MaxMind**   | **GeoIP**                 | Provides Geo-Data for Caddy (blocking) and GoAccess (mapping). Auto-updates weekly. |
-| **Authentik** | **Identity Provider**     | Centralized SSO for protecting internal services.                                   |
+| **VoidAuth**  | **Identity Provider**     | Centralized SSO for protecting internal services.                                   |
 
 ---
 </br>
@@ -72,9 +72,9 @@ This service is the **"Front Door"** of the server. It handles all incoming traf
 
 ---
 
-## 1. The Custom Build Strategy (`Dockerfile`)
+## 1. The Custom Build Strategy
 
-Unlike other services where we pull a standard image, Caddy requires a **custom build**. This is because the standard Caddy image does not include the specific plugins we need for our security and automation logic.
+Unlike other services where we pull a standard image and since we want several modules/plugins behind main Caddy, thankfully we have: https://github.com/serfriz/caddy-custom-builds. This is because the standard Caddy image does not include the specific plugins we need for our security and automation logic.
 
 **The Build Recipe:**
 
@@ -113,7 +113,7 @@ The Compose file orchestrates the build and runtime environment.
 
 ## 3. Configuration Logic (`Caddyfile`) & Snippets
 
-The `Caddyfile` uses **Snippets** to define reusable logic blocks. This avoids repetition and ensures consistency across all subdomains.
+`Caddyfile` uses **Snippets** to define reusable logic blocks. This avoids repetition and ensures consistency across all subdomains.
 
 **File:** [`Caddyfile`](/caddy/Caddyfile)
 
@@ -138,9 +138,9 @@ Handles log formatting and optimization.
 - **Geo-Block:** Instantly rejects any IP **NOT** from Singapore (SG) using the local MaxMind database.
 - **CrowdSec:** If the IP passes the geo-check, it is checked against the CrowdSec blocklist.
 
-#### 3. `(authentik)` - The Doorman
+#### 3. `(voidauth)` - The Doorman
 
-- **Forward Auth:** Forwards the request to Authentik (`http://authentik-server:9000`) for verification.
+- **Forward Auth:** Forwards the request to VoidAuth (`http://voidauth:3000`) for verification.
 - **Headers:** detailed header copying to pass user info to the downstream app.
 
 ### C. Site Logic (How it comes together)
@@ -155,9 +155,10 @@ requests.{$ROOT_DOMAIN} {
 
     import logging      # 1. Enable Logging
     import security     # 2. Check GeoIP & CrowdSec
-    import authentik    # 3. Require Login
+    import voidauth    # 3. Require Login
 
     reverse_proxy http://jellyseerr:5055
+      header_up X-Real-IP {remote_host}
 }
 ```
 
@@ -183,7 +184,7 @@ gotify.{$ROOT_DOMAIN} {
 
     # 3. Handle Web UI (Require Authentik)
     handle {
-        import authentik
+        import voidauth
         reverse_proxy http://gotify:80
     }
 }
@@ -192,37 +193,26 @@ gotify.{$ROOT_DOMAIN} {
 
 ---
 
-## 4. Authentik Service & Integration
+## 4. VoidAuth Service & Integration
 
-We expose Authentik's own interface so users can log in.
+We expose VoidAuth's own interface so users can log in.
 
-**Domain:** `auth.{$ROOT_DOMAIN}`
+**Domain:** `auth1.{$ROOT_DOMAIN}`
 
 ```yaml
-auth.{$ROOT_DOMAIN} {
+auth1.{$ROOT_DOMAIN} {
     tls { ... }
 
-    # We import security (GeoIP + CrowdSec) but NOT authentik
-    # (Authentik cannot protect itself!)
+    # We import security (GeoIP + CrowdSec)
     import security
 
-    reverse_proxy http://authentik-server:9000
+    reverse_proxy voidauth:3000
 }
 ```
 
 ---
 
 ## 5. Maintenance Commands
-
-**To Rebuild (Required if adding plugins):**
-
-```bash
-cd /mnt/pool01/dockerapps/caddy
-docker compose build
-docker compose up -d --force-recreate
-```
-
-[**Script for Auto-Build and Update xcaddy**](/scripts/update-build-xcaddy.sh)
 
 **To Reload Config (Zero Downtime):**
 

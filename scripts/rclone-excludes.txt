@@ -1,5 +1,4 @@
 # --- Directories (Recursive) ---
-# In rclone, directory exclusions end with /** to catch contents
 **/logs/**
 **/log/**
 **/cache/**
@@ -32,7 +31,8 @@ Thumbs.db
 .Trash-1000/
 lost+found/
 
-# --- Specific log files ---
+# --- Specific files ---
+*.sup
 *.log
 *.txt
 

@@ -33,12 +33,17 @@ MediaCover/
 *.db
 *.db-wal
 *.db-shm
+*sqlite
 
 # --- System & Misc ---
 .DS_Store
 Thumbs.db
 .Trash-1000
 /lost+found
+
+# --- Specific Files ---
+scripts/update-build-xcaddy.sh
+authentik/
 
 # --- Exceptions (Allow specific safe configs) ---
 !utilities/homepage/config/

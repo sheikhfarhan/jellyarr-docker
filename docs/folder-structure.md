@@ -35,6 +35,9 @@ This hierarchy reflects my current live server state. It respects the "Two-Zone"
 │   │   ├── logs/
 │   │   │   └── access.log
 │   │   │   └── caddy.log
+│   │   ├── voidauth/
+│   │   │   └── config/
+│   │   │   └── db/
 │   │   └── maxmind/
 │   │       └── GeoLite2-Country.mmdb
 │   │

@@ -31,20 +31,20 @@ cd $BASE_DIR/jellyfin && docker compose up -d --force-recreate
 echo "[5/8] Re-creating VPN-ARR-Stack..."
 cd $BASE_DIR/vpn-arr-stack && docker compose up -d --force-recreate
 
-# --- Step 4: Utilities ---
+# --- Step 4: Monitoring ---
+
+echo "[8/8] Re-creating GoAccess..."
+cd $BASE_DIR/goaccess && docker compose up -d --force-recreate
+
+# --- Step 5: Utilities ---
 
 echo "[6/8] Re-creating Management & Loggings Stack (Utilities)..."
 cd $BASE_DIR/utilities && docker compose up -d --force-recreate
 
-# --- Step 5: Backup Service ---
+# --- Step 6: Backup Service ---
 
 echo "[7/8] Re-creating Kopia..."
 cd $BASE_DIR/kopia && docker compose up -d --force-recreate
-
-# --- Step 6: Authentication ---
-
-echo "[8/8] Re-creating Authentik..."
-cd $BASE_DIR/authentik && docker compose up -d --force-recreate
 
 echo ""
 echo "--- All stacks re-created successfully! ---"

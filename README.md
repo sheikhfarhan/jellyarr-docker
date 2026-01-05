@@ -153,8 +153,7 @@ A quick reference for the `172.20.0.0/24` subnet.
 | `172.20.0.28` | Socket Proxy  | `utilities` | 2375   |
 | `172.20.0.29` | GoAccess      | `goaccess`  | 7890   |
 | `172.20.0.31` | Beszel        | `utilities` | 8090   |
-| `172.20.0.35` | Authentik Srv | `authentik` | 9000   |
-| `172.20.0.36` | Authentik Wrk | `authentik` | -      |
+| `172.20.0.37` | VoidAuth      | `caddy`     | 3002  |
 
 </details>
 
@@ -170,8 +169,8 @@ A quick reference for the `172.20.0.0/24` subnet.
 </details>
 
 <details>
-<summary><b>Authentik Login</b></summary>
+<summary><b>VoidAuth Login</b></summary>
 
-![authentik landing](/assets/authentik-landingpage.png)
+![VoidAuth landing](/assets/voidauth-landingpage.png)
 
 </details>

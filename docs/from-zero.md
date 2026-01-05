@@ -105,7 +105,7 @@
 
 3.  **Restore "Ignored" Assets:**
 
-* **Authentik:** Any images, icons and background files in the `media` folder
+* **Authentik/VoidAuth:** Any images, icons and background files
 * **Crowdsec:** The authentik.yaml file within the `acquis.d` folder
 * **Homepage:** Any missing/custom icons png in the `icons` folder
 

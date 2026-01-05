@@ -94,8 +94,8 @@ create_dir "$TARGET_DIR/caddy/data"
 create_dir "$TARGET_DIR/caddy/config"
 create_dir "$TARGET_DIR/caddy/logs"
 create_dir "$TARGET_DIR/caddy/maxmind"
-create_dir "$TARGET_DIR/caddy/goaccess/html"
-create_dir "$TARGET_DIR/caddy/goaccess/data"
+create_dir "$TARGET_DIR/caddy/voidauth/config"
+create_dir "$TARGET_DIR/caddy/voidauth/db"
 create_env "$TARGET_DIR/caddy"
 
 # 4. Jellyfin & Jellyseerr
@@ -122,10 +122,10 @@ create_env "$TARGET_DIR/vpn-arr-stack"
 create_dir "$TARGET_DIR/utilities/homepage/config"
 create_dir "$TARGET_DIR/utilities/homepage/config/icons"
 create_dir "$TARGET_DIR/utilities/wud/store"
-create_dir "$TARGET_DIR/utilities/portainer/data"
 create_dir "$TARGET_DIR/utilities/beszel/data"
 create_dir "$TARGET_DIR/utilities/beszel/beszel_agent_data"
 create_dir "$TARGET_DIR/utilities/dozzle"
+create_dir "$TARGET_DIR/utilities/arcane/arcane-data"
 create_env "$TARGET_DIR/utilities"
 
 # 7. Kopia
@@ -134,14 +134,7 @@ create_dir "$TARGET_DIR/kopia/cache"
 create_dir "$TARGET_DIR/kopia/logs"
 create_env "$TARGET_DIR/kopia"
 
-# 8. Authentik
-create_dir "$TARGET_DIR/authentik/database"
-create_dir "$TARGET_DIR/authentik/media"
-create_dir "$TARGET_DIR/authentik/templates"
-create_dir "$TARGET_DIR/authentik/certs"
-create_env "$TARGET_DIR/authentik"
-
-# 9. GoAccess
+# 8. GoAccess
 create_dir "$TARGET_DIR/goaccess/data"
 create_dir "$TARGET_DIR/goaccess/html"
 create_env "$TARGET_DIR/goaccess"

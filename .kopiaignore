@@ -12,6 +12,7 @@
 **/regex_patterns/
 **/definitions/
 **/Definations/
+docker-data/
 
 # --- Specific Pattern Directories ---
 # These catch our specific naming conventions
@@ -27,6 +28,8 @@
 Thumbs.db
 .Trash-1000/
 lost+found
+.sup
+
 
 # Specific log files not in folders
 **/*.log

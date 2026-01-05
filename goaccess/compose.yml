@@ -26,6 +26,8 @@ services:
       - ./html:/srv/report
       # MAXMIND (Read from Caddy's folder)
       - ../caddy/maxmind:/srv/maxmind:ro
+    tmpfs:
+      - /var/www/goaccess
     command: >
       /var/log/caddy/access.log
       --log-format=CADDY

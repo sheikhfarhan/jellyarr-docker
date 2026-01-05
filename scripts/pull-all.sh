@@ -5,12 +5,12 @@ echo "--- 🐳 Pulling Updates for All Stacks ---"
 STACKS=(
   "caddy"
   "crowdsec"
+  "goaccess"
   "gotify"
   "jellyfin"
   "kopia"
   "utilities"
   "vpn-arr-stack"
-  
 )
 
 BASE_DIR="/mnt/pool01/dockerapps"
@@ -20,19 +20,7 @@ for stack in "${STACKS[@]}"; do
     echo "⬇️  Checking $stack..."
     cd "$BASE_DIR/$stack" || continue
 
-    # --- SPECIAL HANDLING FOR CADDY ---
-    # Caddy is a custom build so we cannot 'pull' it.
-    if [ "$stack" == "caddy" ]; then
-        echo "Caddy Stack: Updating sidecars only..."
-        
-        # Note: Using SERVICE names from our compose file
-        docker compose pull goaccess maxmind
-        
-        echo "⚠️  Skipping Caddy core (xcaddy custom build). Run 'rebuild-caddy.sh' to update modules/plugins."
-    else
-        # Standard behavior for all other stacks
-        docker compose pull
-    fi
+    docker compose pull
     
     echo "✅  $stack updated."
     echo "-----------------------------------"
