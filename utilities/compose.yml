@@ -224,7 +224,7 @@ services:
       - APP_URL=http://localhost:3552
       - DOCKER_HOST=tcp://socket-proxy:2375
       - PUID=${PUID}
-      - PGID=958
+      - PGID=${PGID}
       - ENCRYPTION_KEY=${ARCANE_KEY}
       - JWT_SECRET=${ARCANE_JWT_SECRET}
     healthcheck:
