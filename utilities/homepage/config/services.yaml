@@ -80,6 +80,18 @@
           url: http://172.20.0.11:8000
           key: {{HOMEPAGE_VAR_GLUETUN_KEY}}
 
+    - Speedtest:
+        icon: /icons/speedtest-tracker.png
+        href: http://192.168.0.100:8085
+        description: Gluetun VPN Speedtest Tracker
+        container: speedtest-tracker
+        widget:
+          type: speedtest
+          url: http://192.168.0.100:8085
+          version: 1
+          key: {{HOMEPAGE_VAR_SPEEDTEST_KEY}} # required for version 2
+          bitratePrecision: 3 # optional, default is 0
+        
     - Transmission:
         icon: transmission.png
         href: http://172.20.0.11:9091

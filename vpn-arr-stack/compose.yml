@@ -36,6 +36,8 @@ services:
       #- 9696:9696 # Prowlarr Web UI
       # --- FLARESOLVERR PORT ---
       #- 8191:8191 # FlareSolverr Web UI
+      # --- SPEEDTEST-TRACKER ---
+      - 8085:80
     volumes:
       # personal preference to split the config and auth folder locally. With only ./gluetun:/gluetun will also simply work
       - ./gluetun/config:/gluetun
@@ -210,6 +212,8 @@ services:
     depends_on:
       qbittorrent:
         condition: service_healthy
+      transmission:
+        condition: service_started
   ##################################################
   # 6. SONARR (TV Show Management)
   ##################################################
@@ -234,6 +238,8 @@ services:
     depends_on:
       qbittorrent:
         condition: service_healthy
+      transmission:
+        condition: service_started
   ##################################################
   # 7. BAZARR (Subtitle/Caption Manager)
   ##################################################
@@ -309,3 +315,26 @@ services:
     volumes:
       - ./profilarr/config:/config 
     restart: unless-stopped
+  ##################################################
+  # 10. SPEEDTEST TRACKER
+  ##################################################
+  speedtest-tracker:
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    container_name: speedtest-tracker
+    # CRITICAL: Route everything through Gluetun
+    network_mode: service:gluetun
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - APP_KEY=base64:${SPEED_KEY}
+      - DB_CONNECTION=sqlite
+      - APP_URL=http://192.168.0.100:8085
+      # Schedule: Run at minute 0 past every hour (Cron format)
+      - SPEEDTEST_SCHEDULE=0 * * * *
+    volumes:
+      - ./speedtest-tracker:/config
+    restart: unless-stopped
+    depends_on:
+      - gluetun
+

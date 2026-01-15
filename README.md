@@ -5,7 +5,7 @@
 ![Status](https://img.shields.io/badge/Status-Production-success)
 ![OS](<https://img.shields.io/badge/OS-CachyOS_(Arch)-blue>)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![Security](https://img.shields.io/badge/Security-CrowdSec_%2B_Authentik-red)
+![Security](https://img.shields.io/badge/Security-CrowdSec_%2B_VoidAuth-red)
 
 This repository documents the architecture and configuration of a self-hosted media server. Unlike standard "copy-paste" stacks, this system features a **custom "Split-Network" architecture** that isolates P2P traffic within a VPN bubble while maintaining direct access for media streaming and management.
 
@@ -36,7 +36,7 @@ Layering security elements, since we do have exposed services to the internet.
 - **Layer 1:** **Firewalld** blocks containers from scanning our home LAN (`192.168.x.x`).
 - **Layer 2:** **Caddy** acts as the ingress, backed by **GeoIP** (Singapore Only) blocking.
 - **Layer 3:** **CrowdSec** acts as the "Brain," reading logs and banning malicious IPs automatically.
-- **Layer 4:** **Authentik** provides centralized SSO for interfaces.
+- **Layer 4:** **VoidAuth** provides centralized SSO for specific exposed interfaces.
 
 ---
 
@@ -94,6 +94,7 @@ Click the links below for deep-dives into specific components of the stack.
 | **GoAccess**        | Real-time Access Log Analytics | **[Docs](docs/goaccess.md)**        |
 | **Beszel**          | Lightweight Server Monitoring  | **[Docs](docs/beszel-setup.md)**    |
 | **Kopia**           | Offsite Backups                | **[Docs](docs/kopia-setup.md)**     |
+| **Speedtest-Tracker**           | VPN Gluetun Speedtest                | **[Docs](docs/vpn-automation-stack.md)**     |
 | **Troubleshooting** | Common errors and fixes        | **[Docs](docs/troubleshooting.md)** |
 
 ---
@@ -140,14 +141,14 @@ A quick reference for the `172.20.0.0/24` subnet.
 | `172.20.0.20` | Prowlarr      | `vpn-arr`   | 9696   |
 | `172.20.0.21` | FlareSolverr  | `vpn-arr`   | 8191   |
 | `172.20.0.23` | Caddy         | `caddy`     | 80/443 |
-| `172.20.0.24` | CrowdSec      | `crowdsec`  | 8080   |
+| `172.20.0.24` | CrowdSec      | `crowdsec`  | -      |
 | `172.20.0.25` | Homepage      | `utilities` | 3000   |
 | `172.20.0.26` | Dozzle        | `utilities` | 8080   |
 | `172.20.0.27` | WUD           | `utilities` | 3001   |
 | `172.20.0.28` | Socket Proxy  | `utilities` | 2375   |
 | `172.20.0.29` | GoAccess      | `goaccess`  | 7890   |
 | `172.20.0.31` | Beszel        | `utilities` | 8090   |
-| `172.20.0.37` | VoidAuth      | `caddy`     | 3002  |
+| `172.20.0.37` | VoidAuth      | `caddy`     | 3002   |
 
 </details>
 

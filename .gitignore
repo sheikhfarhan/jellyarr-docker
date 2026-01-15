@@ -14,6 +14,7 @@ store/
 html/
 maxmind/
 beszel_agent_data/
+db/
 
 
 # -- For Authentik ---
@@ -44,6 +45,7 @@ Thumbs.db
 # --- Specific Files ---
 scripts/update-build-xcaddy.sh
 authentik/
+speedtest-tracker/
 
 # --- Exceptions (Allow specific safe configs) ---
 !utilities/homepage/config/
